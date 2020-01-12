@@ -1,0 +1,32 @@
+.stock-price-analysis-pane {
+	-fx-pref-width: 660;
+	-fx-pref-height: 440;
+}
+
+.grid-pane {
+	-fx-hgap: 10;
+	-fx-padding: 20 5 30 5;
+}
+
+.button-container {
+	-fx-spacing: 10;
+	-fx-alignment: center-right;
+	-fx-padding: 20 5 30 5;
+}
+
+.tree-table-view .column-header .label {
+	-fx-wrap-text: true;
+}
+
+.tree-table-cell {
+	-fx-alignment: center;
+	-fx-wrap-text: true;
+}
+
+.jfx-text-field {
+	-jfx-label-float: true;
+}
+
+.jfx-button {
+	-jfx-button-type: RAISED;
+}
