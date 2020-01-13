@@ -3,27 +3,32 @@ package stockanalysis;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
@@ -36,11 +41,34 @@ import com.jfoenix.validation.RequiredFieldValidator;
 public class Main extends Application {
 
     private Analyzer analyzer = new Analyzer();
+    private ObjectProperty<List<Tuple>> tupleProperty = new SimpleObjectProperty<>();
 
     @Override
     public void start(Stage primaryStage) {
         StockAnalysisPane root = new StockAnalysisPane();
         root.getStyleClass().add("stock-price-analysis-pane");
+
+        tupleProperty.addListener((obs, oldValue, newValue) -> {
+            root.saveBtn.setDisable(newValue.isEmpty());
+            root.totalLbl.setText("Total: " + newValue.size());
+        });
+
+        root.saveBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save Analysis Result");
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+            fileChooser.setInitialFileName("analysis.txt");
+
+            Optional.ofNullable(fileChooser.showSaveDialog(primaryStage))
+                .ifPresent(file -> {
+                    root.progressBar.setProgress(-1);
+
+                    new Thread(() -> {
+                        Util.saveAnalysisResult(tupleProperty.get(), file.toPath());
+                        Platform.runLater(() -> root.progressBar.setProgress(0));
+                    }).start();
+                });
+        });
 
         root.selectFileBtn.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -60,9 +88,6 @@ public class Main extends Application {
 
             if (peakDurationInput.validate() & peakDifferenceInput.validate() &
                     crashRateInput.validate() & filePathInput.validate()) {
-                TreeItem<Tuple> rootItem = root.table.getRoot();
-                rootItem.getChildren().clear();
-
                 int peakDuration = Integer.parseInt(peakDurationInput.getText());
                 double peakDifference = Double.parseDouble(peakDifferenceInput.getText()) / 100;
                 double crashRate = Double.parseDouble(crashRateInput.getText()) / 100;
@@ -73,12 +98,24 @@ public class Main extends Application {
                 analyzer.setPeakDifference(peakDifference);
                 analyzer.setPath(path);
 
+                root.progressBar.setProgress(-1);
+
                 new Thread(() -> {
-                    analyzer.getAnalysisResult()
-                        .stream()
-                        .map(TreeItem::new)
-                        .forEach(rootItem.getChildren()::add);
+                    List<Tuple> tuples = analyzer.getAnalysisResult();
+
+                    Platform.runLater(() -> {
+                        TreeItem<Tuple> rootItem = root.table.getRoot();
+                        rootItem.getChildren().clear();
+
+                        tuples.stream()
+                            .map(TreeItem::new)
+                            .forEach(rootItem.getChildren()::add);
+
+                        tupleProperty.set(tuples);
+                        root.progressBar.setProgress(0);
+                    });
                 }).start();
+
             }
         });
 
@@ -86,7 +123,8 @@ public class Main extends Application {
         scene.getStylesheets().add("/style.css");
 
         primaryStage.setScene(scene);
-        primaryStage.setTitle("StockPriceAnalysis");
+        primaryStage.setTitle("StockAnalysis");
+        primaryStage.getIcons().addAll(new Image("icon16.png"), new Image("icon32.png"), new Image("icon64.png"));
         primaryStage.show();
     }
 
@@ -107,6 +145,8 @@ public class Main extends Application {
         JFXTextField filePathInput;
 
         JFXTreeTableView<Tuple> table;
+        JFXProgressBar progressBar;
+        Label totalLbl;
 
         private StockAnalysisPane() {
             initControls();
@@ -119,12 +159,14 @@ public class Main extends Application {
             hBox.getStyleClass().add("button-container");
             hBox.getChildren().addAll(filePathInput, selectFileBtn, saveBtn, analyzeBtn);
 
+            VBox vBox = new VBox();
+            vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
+            vBox.getStyleClass().add("vbox");
+            vBox.getChildren().addAll(totalLbl, hBox, progressBar);
+
             setTop(gridPane);
             setCenter(table);
-            setBottom(hBox);
-
-            JFXProgressBar bar = new JFXProgressBar(-1);
-            bar.setSecondaryProgress(-1);
+            setBottom(vBox);
         }
 
         private GridPane createGridPane() {
@@ -141,12 +183,17 @@ public class Main extends Application {
 
         private void initControls() {
             selectFileBtn = new JFXButton("Select file");
+
             saveBtn = new JFXButton("Save");
+            saveBtn.setDisable(true);
+
             analyzeBtn = new JFXButton("Analyze");
+            analyzeBtn.setDefaultButton(true);
 
             IntegerValidator integerValidator = new IntegerValidator();
             DoubleValidator doubleValidator = new DoubleValidator();
             RequiredFieldValidator requiredFieldValidator = new RequiredFieldValidator("Input required");
+            FileExistValidator fileExistValidator = new FileExistValidator();
 
             peakDurationInput = new JFXTextField();
             peakDurationInput.setPromptText("Duration between peaks (in days)");
@@ -162,39 +209,75 @@ public class Main extends Application {
 
             filePathInput = new JFXTextField();
             filePathInput.setPromptText("CSV file path");
-            // filePathInput.setEditable(false);
-            filePathInput.getValidators().addAll(requiredFieldValidator);
+            filePathInput.getValidators().addAll(requiredFieldValidator, fileExistValidator);
 
             table = createTreeTable();
+
+            progressBar = new JFXProgressBar(0);
+            progressBar.prefWidthProperty().bind(widthProperty());
+
+            totalLbl = new Label("Total: 0");
         }
 
         @SuppressWarnings("unchecked")
         private JFXTreeTableView<Tuple> createTreeTable() {
+            Callback<TreeTableColumn<Tuple, LocalDate>, TreeTableCell<Tuple, LocalDate>> dateFormatterCellFactory = col -> new TreeTableCell<>() {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY/MM/dd");
+
+                @Override
+                protected void updateItem(LocalDate value, boolean empty) {
+                    super.updateItem(value, empty);
+                    if (empty) {
+                        setText(null);
+                    } else {
+                        setText(value.format(formatter));
+                    }
+                }
+            };
+            Callback<TreeTableColumn<Tuple, Double>,TreeTableCell<Tuple,Double>> doubleFormatterCellFactory = col -> new TreeTableCell<>() {
+                @Override
+                protected void updateItem(Double value, boolean empty) {
+                    super.updateItem(value, empty);
+                    if (empty) {
+                        setText(null);
+                    } else {
+                        setText(String.format("%.2f", value));
+                    }
+                }
+            };
+
             TreeTableColumn<Tuple, LocalDate> crashDateCol = new TreeTableColumn<>("Crash Identification Date");
             TreeTableColumn<Tuple, LocalDate> peakDateCol = new TreeTableColumn<>("Peak Date");
             TreeTableColumn<Tuple, Double> peakStockPriceCol = new TreeTableColumn<>("Index at Peak");
             TreeTableColumn<Tuple, LocalDate> troughDateCol = new TreeTableColumn<>("Trough Date");
             TreeTableColumn<Tuple, Double> troughStockPriceCol = new TreeTableColumn<>("Index at Trough");
-            // TreeTableColumn<Tuple, Double> peakTroughDeclineCol = new TreeTableColumn<>("Peak-to-Trough decline(%)");
-            TreeTableColumn<Tuple, String> peakTroughDeclineCol = new TreeTableColumn<>("Peak-to-Trough decline(%)");
+            TreeTableColumn<Tuple, Double> peakTroughDeclineCol = new TreeTableColumn<>("Peak-to-Trough decline(%)");
             TreeTableColumn<Tuple, Integer> peakTroughDurationCol = new TreeTableColumn<>("Peak-to-Trough duration(in days)");
 
             crashDateCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("crashDate"));
+            crashDateCol.setCellFactory(dateFormatterCellFactory);
+
             peakDateCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakDate"));
+            peakDateCol.setCellFactory(dateFormatterCellFactory);
+
+            peakStockPriceCol.setCellFactory(doubleFormatterCellFactory);
             peakStockPriceCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakStockPrice"));
+
             troughDateCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("troughDate"));
+            troughDateCol.setCellFactory(dateFormatterCellFactory);
+
+            troughStockPriceCol.setCellFactory(doubleFormatterCellFactory);
             troughStockPriceCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("troughStockPrice"));
-            // peakTroughDeclineCol.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getValue().getPeakTroughDecline(3) * 100));
-            peakTroughDeclineCol.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(String.format("%.2f", c.getValue().getValue().getPeakTroughDecline() * 100)));
+
+            peakTroughDeclineCol.setCellFactory(doubleFormatterCellFactory);
+            peakTroughDeclineCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getPeakTroughDecline(3) * 100));
+
             peakTroughDurationCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakTroughDuration"));
 
-            TreeItem<Tuple> root = new TreeItem<>(new Tuple(null, null, null));
-            StockPrice sp = new StockPrice(LocalDate.now(), 100);
-            root.getChildren().add(new TreeItem<>(new Tuple(sp, sp, sp)));
-
-            JFXTreeTableView<Tuple> table = new JFXTreeTableView<>(root);
+            JFXTreeTableView<Tuple> table = new JFXTreeTableView<>(new TreeItem<Tuple>(null));
             table.setShowRoot(false);
-            table.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY);
+            table.setFocusTraversable(false);
+            table.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
             table.getColumns().addAll(crashDateCol, peakDateCol,
                     peakStockPriceCol, troughDateCol, 
                     troughStockPriceCol, peakTroughDeclineCol, 

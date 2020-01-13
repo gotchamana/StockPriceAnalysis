@@ -1,6 +1,6 @@
 .stock-price-analysis-pane {
-	-fx-pref-width: 660;
-	-fx-pref-height: 440;
+	-fx-pref-width: 720;
+	-fx-pref-height: 480;
 }
 
 .grid-pane {
@@ -11,7 +11,11 @@
 .button-container {
 	-fx-spacing: 10;
 	-fx-alignment: center-right;
-	-fx-padding: 20 5 30 5;
+	-fx-padding: 5 5 30 5;
+}
+
+.vbox {
+	-fx-alignment: center-right;
 }
 
 .tree-table-view .column-header .label {
@@ -23,10 +27,20 @@
 	-fx-wrap-text: true;
 }
 
+.label {
+	-fx-font-size: 14;
+}
+
 .jfx-text-field {
 	-jfx-label-float: true;
+	-fx-font-size: 14;
 }
 
 .jfx-button {
-	-jfx-button-type: RAISED;
+	-fx-background-color: #c2e6dd;
+	-fx-font-size: 15;
+}
+
+.jfx-progress-bar .bar {
+	-fx-background-color: #7db6a8;
 }

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXProgressBar?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TreeTableView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -10,31 +13,32 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" styleClass="border-pane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <center>
-      <TreeTableView>
-        <columns>
-          <TreeTableColumn prefWidth="75.0" text="C1" />
-          <TreeTableColumn prefWidth="75.0" text="C2" />
-        </columns>
-         <columnResizePolicy>
-            <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </TreeTableView>
-   </center>
+<BorderPane prefHeight="400.0" prefWidth="600.0" styleClass="stock-price-analysis-pane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <bottom>
-      <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="button-container" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER_RIGHT" styleClass="vbox">
          <children>
-            <TextField HBox.hgrow="SOMETIMES" />
-            <Button mnemonicParsing="false" text="Button" />
-            <Button mnemonicParsing="false" text="Button" />
-            <Button mnemonicParsing="false" text="Button" />
+            <Label text="Label">
+               <VBox.margin>
+                  <Insets right="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+            <HBox alignment="CENTER_RIGHT" fillHeight="false" spacing="10.0" styleClass="button-container">
+               <children>
+                  <JFXTextField promptText="TextField" styleClass="jfx-text-field" HBox.hgrow="SOMETIMES" />
+                  <JFXButton styleClass="jfx-button" />
+                  <JFXButton styleClass="jfx-button" />
+                  <JFXButton styleClass="jfx-button" />
+               </children>
+            </HBox>
+            <JFXProgressBar progress="0.09">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </JFXProgressBar>
          </children>
-         <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-         </padding>
-      </HBox>
+      </VBox>
    </bottom>
    <top>
       <GridPane hgap="10.0" styleClass="grid-pane" vgap="20.0" BorderPane.alignment="CENTER">
@@ -47,9 +51,9 @@
           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <TextField />
-            <TextField GridPane.columnIndex="2" />
-            <TextField GridPane.columnIndex="1" />
+            <JFXTextField styleClass="jfx-text-field" />
+            <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="1" />
+            <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="2" />
          </children>
          <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="20.0" />
@@ -59,4 +63,15 @@
          </BorderPane.margin>
       </GridPane>
    </top>
+   <center>
+      <JFXTreeTableView focusTraversable="false" showRoot="false" BorderPane.alignment="CENTER">
+         <columns>
+            <TreeTableColumn prefWidth="75.0" text="Column X" />
+            <TreeTableColumn prefWidth="75.0" text="Column X" />
+         </columns>
+         <columnResizePolicy>
+            <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </JFXTreeTableView>
+   </center>
 </BorderPane>

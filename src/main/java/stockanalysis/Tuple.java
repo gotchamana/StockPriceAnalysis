@@ -32,30 +32,12 @@ public class Tuple extends RecursiveTreeObject<Tuple> implements Cloneable {
 		return crash.getDate();
 	}
 
-	public String getPeakDate(DateTimeFormatter formatter) {
-		return peak.getDate().format(formatter);
-	}
-
-	public String getTroughDate(DateTimeFormatter formatter) {
-		return trough.getDate().format(formatter);
-	}
-
-	public String getCrashDate(DateTimeFormatter formatter) {
-		return crash.getDate().format(formatter);
-	}
-
 	public double getPeakStockPrice() {
 		return peak.getPrice();
 	}
 
 	public double getTroughStockPrice() {
 		return trough.getPrice();
-	}
-
-	public double getPeakTroughDecline() {
-		double decline = (peak.getPrice() - trough.getPrice()) / peak.getPrice();
-
-		return decline;
 	}
 
 	public double getPeakTroughDecline(int decimalPlace) {
