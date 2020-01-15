@@ -60,6 +60,7 @@ class StockAnalysisPane extends BorderPane {
 		vBox.getStyleClass().add("vbox");
 		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
 
+        getStyleClass().add("stock-price-analysis-pane");
 		setTop(gridPane);
 		setCenter(table);
 		setBottom(vBox);
@@ -67,8 +68,8 @@ class StockAnalysisPane extends BorderPane {
 
 	private GridPane createGridPane() {
 		ColumnConstraints col = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
-				GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
-				HPos.CENTER, true);
+			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
+			HPos.CENTER, true);
 
 		GridPane gridPane = new GridPane();
 		gridPane.getColumnConstraints().addAll(col, col, col);
@@ -175,9 +176,9 @@ class StockAnalysisPane extends BorderPane {
 		table.setFocusTraversable(false);
 		table.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
 		table.getColumns().addAll(crashDateCol, peakDateCol,
-				peakStockPriceCol, troughDateCol, 
-				troughStockPriceCol, peakTroughDeclineCol, 
-				peakTroughDurationCol);
+			peakStockPriceCol, troughDateCol, 
+			troughStockPriceCol, peakTroughDeclineCol, 
+			peakTroughDurationCol);
 
 		return table;
 	}
