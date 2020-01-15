@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.fest.reflect.core.Reflection.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@EnabledIfSystemProperty(named = "class.test", matches = "Analyzer")
+@EnabledIfSystemProperty(named = "class.test", matches = "Analyzer|All")
 public class AnalyzerTest {
 
 	private Analyzer analyzer;
@@ -28,35 +28,6 @@ public class AnalyzerTest {
 	@BeforeEach
 	public void init() {
 		analyzer = new Analyzer();
-	}
-
-    @ParameterizedTest 
-	@MethodSource("csvPathProvider")
-	public void Should_GetSortedStockPrice_When_ParseFromCsvFile(Path path, List<StockPrice> expected) {
-		List<StockPrice> data = method("parseData")
-			.withReturnType(new TypeRef<List<StockPrice>>() {})
-			.withParameterTypes(Path.class)
-			.in(analyzer)
-			.invoke(path);
-
-		assertEquals(expected, data);
-		assertThrows(UnsupportedOperationException.class, () -> data.add(new StockPrice(LocalDate.now(), 0)));
-	}
-
-	private static Stream<Arguments> csvPathProvider() {
-		Path path1 = Paths.get(AnalyzerTest.class.getResource("/parseDataTest1.csv").getPath());
-		Path path2 = Paths.get(AnalyzerTest.class.getResource("/parseDataTest2.csv").getPath());
-
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 562.65);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 561.55);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 7), 564.81);
-
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3);
-
-		return Stream.of(
-				Arguments.of(path1, data),
-				Arguments.of(path2, data)
-			);
 	}
 
     @ParameterizedTest 
@@ -149,13 +120,13 @@ public class AnalyzerTest {
 		Tuple t6 = new Tuple(sp6, null, sp7);
 		Tuple t7 = new Tuple(sp6, null, sp7);
 
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6, sp7);
+		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8);
 		List<Tuple> expected = Arrays.asList(t1, t2, t3, t4, t5, t6, t7);
 
 		analyzer.setCrashRate(0.1);
 
-		List<StockPrice> firstProcessResult = method("firstProcess")
-			.withReturnType(new TypeRef<List<StockPrice>>() {})
+		List<Tuple> firstProcessResult = method("firstProcess")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
 			.withParameterTypes(int.class, List.class)
 			.in(analyzer)
 			.invoke(1, data);
@@ -248,5 +219,22 @@ public class AnalyzerTest {
 				Arguments.of(1, 0.2, tuples2, data2, expected3),
 				Arguments.of(5, 0.2, tuples3, data3, expected3)
 			);
+	}
+
+	@Test
+	public void Should_ReturnTheSameTuplesAsSecondProcessResult_When_TheInputTuplesIsEmpty() {
+		List<Tuple> emptyTuples = List.of();
+		List<StockPrice> emptyData = List.of();
+
+		analyzer.setPeakDuration(0);
+		analyzer.setPeakDifference(0);
+
+		List<Tuple> secondProcessResult = method("secondProcess")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(List.class, List.class)
+			.in(analyzer)
+			.invoke(emptyTuples, emptyData);
+
+		assertEquals(List.of(), secondProcessResult);
 	}
 }

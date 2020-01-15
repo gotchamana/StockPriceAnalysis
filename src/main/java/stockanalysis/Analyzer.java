@@ -43,7 +43,7 @@ public class Analyzer {
 		List<Tuple> tuples = null;
 
 		try {
-			List<StockPrice> data = parseData(Paths.get(path).toRealPath());
+			List<StockPrice> data = Util.parseData(Paths.get(path).toRealPath());
 			tuples = firstProcess(90, data);
 			tuples = secondProcess(tuples, data);
 
@@ -52,25 +52,6 @@ public class Analyzer {
 		}
 
 		return tuples;
-	}
-
-	private List<StockPrice> parseData(Path file) {
-		try(Stream<String> lines = Files.lines(file)) {
-			return lines.skip(1)
-				.map(line -> line.split("\\s*,\\s*"))
-				.map(line -> {
-					LocalDate date = LocalDate.parse(line[0], DateTimeFormatter.ofPattern("yyyy/M/d"));
-					double price = Double.parseDouble(line[1]);
-					return new StockPrice(date, price);
-				})
-				.sorted()
-				.collect(Collectors.toUnmodifiableList());
-
-		} catch(IOException e) {
-			e.printStackTrace();
-		}	
-
-		return null;
 	}
 
 	private List<Tuple> firstProcess(int range, List<StockPrice> data) {

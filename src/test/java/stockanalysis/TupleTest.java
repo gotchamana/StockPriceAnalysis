@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@EnabledIfSystemProperty(named = "class.test", matches = "Tuple")
+@EnabledIfSystemProperty(named = "class.test", matches = "Tuple|All")
 public class TupleTest {
 
     @ParameterizedTest 
