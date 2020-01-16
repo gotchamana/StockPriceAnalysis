@@ -16,6 +16,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
@@ -50,6 +51,9 @@ class StockAnalysisPane extends BorderPane {
 		GridPane gridPane = createGridPane();
 		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
 
+		StackPane stackPane = new StackPane();
+		stackPane.getChildren().addAll(table);
+
 		HBox hBox = new HBox();
 		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
 		hBox.getStyleClass().add("button-container");
@@ -62,7 +66,7 @@ class StockAnalysisPane extends BorderPane {
 
         getStyleClass().add("stock-price-analysis-pane");
 		setTop(gridPane);
-		setCenter(table);
+		setCenter(stackPane);
 		setBottom(vBox);
 	}
 

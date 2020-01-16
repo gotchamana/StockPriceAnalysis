@@ -1,15 +1,21 @@
 package stockanalysis;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.concurrent.Task;
 import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import org.jooq.lambda.Unchecked;
 
 import com.jfoenix.controls.JFXTextField;
 
@@ -31,8 +37,19 @@ public class Controller {
 
 	public void init() {
 		tupleProperty.addListener((obs, oldValue, newValue) -> {
+			// Update save button
 			root.saveBtn.setDisable(newValue.isEmpty());
+
+			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
+
+			// Update table
+			TreeItem<Tuple> rootItem = root.table.getRoot();
+			rootItem.getChildren().clear();
+
+			newValue.stream()
+				.map(TreeItem::new)
+				.forEach(rootItem.getChildren()::add);
 		});
 
 		root.saveBtn.setOnAction(e -> {
@@ -43,12 +60,19 @@ public class Controller {
 
 			Optional.ofNullable(fileChooser.showSaveDialog(stage))
 				.ifPresent(file -> {
-					root.progressBar.setProgress(-1);
+					Task<Void> saveTask = new Task<>() {
+						@Override
+						protected Void call() throws Exception {
+							Util.saveAnalysisResult(tupleProperty.get(), file.toPath());
+							return null;
+						}
+					};
+					saveTask.setOnRunning(event -> root.progressBar.setProgress(-1));
+					saveTask.setOnSucceeded(event -> root.progressBar.setProgress(0));
 
-					new Thread(() -> {
-						Util.saveAnalysisResult(tupleProperty.get(), file.toPath());
-						Platform.runLater(() -> root.progressBar.setProgress(0));
-					}).start();
+					Thread thread = new Thread(saveTask);
+					thread.setDaemon(true);
+					thread.start();
 				});
 		});
 
@@ -74,29 +98,29 @@ public class Controller {
 				double peakDifference = Double.parseDouble(peakDifferenceInput.getText()) / 100;
 				double crashRate = Double.parseDouble(crashRateInput.getText()) / 100;
 				String path = filePathInput.getText();
+				Function<String, Path> convertToRealPath = Unchecked.function(p -> Paths.get(p).toRealPath());
+				List<StockPrice> data = Util.parseData(convertToRealPath.apply(path));
 
 				analyzer.setCrashRate(crashRate);
 				analyzer.setPeakDuration(peakDuration);
 				analyzer.setPeakDifference(peakDifference);
-				analyzer.setPath(path);
+				analyzer.setData(data);
 
-				root.progressBar.setProgress(-1);
+				Task<List<Tuple>> analyzeTask = new Task<>() {
+					@Override
+					protected List<Tuple> call() throws Exception {
+						return analyzer.getAnalysisResult();
+					}
+				};
+				analyzeTask.setOnRunning(event -> root.progressBar.setProgress(-1));
+				analyzeTask.setOnSucceeded(event -> {
+					root.progressBar.setProgress(0);
+					tupleProperty.set(analyzeTask.getValue());
+				});
 
-				new Thread(() -> {
-					List<Tuple> tuples = analyzer.getAnalysisResult();
-
-					Platform.runLater(() -> {
-						TreeItem<Tuple> rootItem = root.table.getRoot();
-						rootItem.getChildren().clear();
-
-						tuples.stream()
-							.map(TreeItem::new)
-							.forEach(rootItem.getChildren()::add);
-
-						tupleProperty.set(tuples);
-						root.progressBar.setProgress(0);
-					});
-				}).start();
+				Thread thread = new Thread(analyzeTask);
+				thread.setDaemon(true);
+				thread.start();
 			}
 		});
 	}

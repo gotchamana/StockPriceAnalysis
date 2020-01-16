@@ -5,6 +5,9 @@
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TreeTableView?>
@@ -13,6 +16,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane prefHeight="400.0" prefWidth="600.0" styleClass="stock-price-analysis-pane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
@@ -64,14 +68,26 @@
       </GridPane>
    </top>
    <center>
-      <JFXTreeTableView focusTraversable="false" showRoot="false" BorderPane.alignment="CENTER">
-         <columns>
-            <TreeTableColumn prefWidth="75.0" text="Column X" />
-            <TreeTableColumn prefWidth="75.0" text="Column X" />
-         </columns>
-         <columnResizePolicy>
-            <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </JFXTreeTableView>
+      <StackPane>
+         <children>
+            <JFXTreeTableView focusTraversable="false" showRoot="false">
+               <columns>
+                  <TreeTableColumn prefWidth="75.0" text="Column X" />
+                  <TreeTableColumn prefWidth="75.0" text="Column X" />
+               </columns>
+               <columnResizePolicy>
+                  <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </JFXTreeTableView>
+            <LineChart title="Title">
+              <xAxis>
+                <CategoryAxis />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </LineChart>
+         </children>
+      </StackPane>
    </center>
 </BorderPane>

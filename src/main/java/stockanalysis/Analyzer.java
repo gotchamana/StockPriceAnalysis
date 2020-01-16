@@ -37,19 +37,11 @@ public class Analyzer {
 
 	@Setter
 	@NonNull
-	private String path;
+	private List<StockPrice> data;
 
 	public List<Tuple> getAnalysisResult() {
-		List<Tuple> tuples = null;
-
-		try {
-			List<StockPrice> data = Util.parseData(Paths.get(path).toRealPath());
-			tuples = firstProcess(90, data);
-			tuples = secondProcess(tuples, data);
-
-		} catch(IOException e){
-			e.printStackTrace();
-		}
+		List<Tuple> tuples = firstProcess(90, data);
+		tuples = secondProcess(tuples, data);
 
 		return tuples;
 	}
