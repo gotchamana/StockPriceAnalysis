@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXComboBox?>
 <?import com.jfoenix.controls.JFXProgressBar?>
+<?import com.jfoenix.controls.JFXTabPane?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
@@ -9,8 +11,11 @@
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -19,75 +24,106 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" styleClass="stock-price-analysis-pane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <bottom>
-      <VBox alignment="CENTER_RIGHT" styleClass="vbox">
-         <children>
-            <Label text="Label">
-               <VBox.margin>
-                  <Insets right="5.0" top="5.0" />
-               </VBox.margin>
-            </Label>
-            <HBox alignment="CENTER_RIGHT" fillHeight="false" spacing="10.0" styleClass="button-container">
-               <children>
-                  <JFXTextField promptText="TextField" styleClass="jfx-text-field" HBox.hgrow="SOMETIMES" />
-                  <JFXButton styleClass="jfx-button" />
-                  <JFXButton styleClass="jfx-button" />
-                  <JFXButton styleClass="jfx-button" />
-               </children>
-            </HBox>
-            <JFXProgressBar progress="0.09">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </JFXProgressBar>
-         </children>
-      </VBox>
-   </bottom>
-   <top>
-      <GridPane hgap="10.0" styleClass="grid-pane" vgap="20.0" BorderPane.alignment="CENTER">
-        <columnConstraints>
-          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
-          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
-        </columnConstraints>
-        <rowConstraints>
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-        </rowConstraints>
-         <children>
-            <JFXTextField styleClass="jfx-text-field" />
-            <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="1" />
-            <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="2" />
-         </children>
-         <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="20.0" />
-         </padding>
-         <BorderPane.margin>
-            <Insets />
-         </BorderPane.margin>
-      </GridPane>
-   </top>
-   <center>
-      <StackPane>
-         <children>
-            <JFXTreeTableView focusTraversable="false" showRoot="false">
-               <columns>
-                  <TreeTableColumn prefWidth="75.0" text="Column X" />
-                  <TreeTableColumn prefWidth="75.0" text="Column X" />
-               </columns>
-               <columnResizePolicy>
-                  <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-               </columnResizePolicy>
-            </JFXTreeTableView>
-            <LineChart title="Title">
-              <xAxis>
-                <CategoryAxis />
-              </xAxis>
-              <yAxis>
-                <NumberAxis side="LEFT" />
-              </yAxis>
-            </LineChart>
-         </children>
-      </StackPane>
-   </center>
-</BorderPane>
+<JFXTabPane side="LEFT" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <tabs>
+      <Tab closable="false" text="Tab1">
+         <content>
+            <BorderPane prefHeight="400.0" prefWidth="600.0" styleClass="stock-price-border-pane">
+               <bottom>
+                  <VBox alignment="CENTER_RIGHT" styleClass="vbox">
+                     <children>
+                        <Label text="Label">
+                           <VBox.margin>
+                              <Insets right="5.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <HBox alignment="CENTER_RIGHT" fillHeight="false" spacing="10.0" styleClass="button-container">
+                           <children>
+                              <JFXTextField promptText="TextField" styleClass="jfx-text-field" HBox.hgrow="SOMETIMES" />
+                              <JFXButton styleClass="jfx-button" />
+                              <JFXButton styleClass="jfx-button" />
+                              <JFXButton styleClass="jfx-button" />
+                           </children>
+                        </HBox>
+                        <JFXProgressBar progress="0.09">
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </JFXProgressBar>
+                     </children>
+                  </VBox>
+               </bottom>
+               <top>
+                  <GridPane hgap="10.0" styleClass="grid-pane" vgap="20.0" BorderPane.alignment="CENTER">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <JFXTextField styleClass="jfx-text-field" />
+                        <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="1" />
+                        <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="2" />
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="20.0" />
+                     </padding>
+                     <BorderPane.margin>
+                        <Insets />
+                     </BorderPane.margin>
+                  </GridPane>
+               </top>
+               <center>
+                  <JFXTreeTableView focusTraversable="false" showRoot="false">
+                     <columns>
+                        <TreeTableColumn prefWidth="75.0" text="Column X" />
+                        <TreeTableColumn prefWidth="75.0" text="Column X" />
+                     </columns>
+                     <columnResizePolicy>
+                        <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </JFXTreeTableView>
+               </center>
+            </BorderPane>
+         </content>
+      </Tab>
+      <Tab closable="false" text="Tab2">
+         <content>
+            <BorderPane prefHeight="200.0" prefWidth="200.0" styleClass="stock-price-border-pane">
+               <center>
+                  <StackPane alignment="TOP_RIGHT" styleClass="stack-pane" BorderPane.alignment="CENTER">
+                     <children>
+                        <VBox alignment="BOTTOM_CENTER">
+                           <children>
+                              <LineChart prefWidth="686.0">
+                                <xAxis>
+                                  <CategoryAxis side="BOTTOM" />
+                                </xAxis>
+                                <yAxis>
+                                  <NumberAxis side="LEFT" />
+                                </yAxis>
+                              </LineChart>
+                              <Pagination maxPageIndicatorCount="5" pageCount="1" />
+                           </children>
+                        </VBox>
+                        <JFXButton contentDisplay="GRAPHIC_ONLY" styleClass="refresh-chart-button">
+                           <StackPane.margin>
+                              <Insets right="10.0" top="10.0" />
+                           </StackPane.margin>
+                        </JFXButton>
+                        <AnchorPane pickOnBounds="false">
+                           <children>
+                              <JFXComboBox labelFloat="true" promptText="ComboBox" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="10.0" />
+                           </children>
+                        </AnchorPane>
+                     </children>
+                  </StackPane>
+               </center>
+            </BorderPane>
+         </content>
+      </Tab>
+   </tabs>
+</JFXTabPane>

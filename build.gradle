@@ -13,6 +13,8 @@ repositories {
 dependencies {
 	implementation 'com.jfoenix:jfoenix:9.0.8'
 	implementation 'org.jooq:jool:0.9.13'
+	implementation 'org.kordamp.ikonli:ikonli-javafx:11.3.5'
+	implementation 'org.kordamp.ikonli:ikonli-materialdesign-pack:11.3.5'
 
 	testImplementation 'org.testfx:testfx-core:4.0.16-alpha'
 	testImplementation 'org.testfx:testfx-junit5:4.0.16-alpha'

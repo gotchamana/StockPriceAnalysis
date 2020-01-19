@@ -1,4 +1,12 @@
-.stock-price-analysis-pane {
+/***************
+*  Container  *
+***************/
+
+.jfx-tab-pane .tab-header-background {
+	-fx-background-color: olivedrab;
+}
+
+.stock-price-border-pane {
 	-fx-pref-width: 720;
 	-fx-pref-height: 480;
 }
@@ -18,6 +26,56 @@
 	-fx-alignment: center-right;
 }
 
+.stack-pane {
+	-fx-alignment: top-right;
+}
+
+/***********
+*  Chart  *
+***********/
+
+.axis {
+	-fx-minor-tick-visible: false;
+}
+
+.chart {
+	-fx-legend-visible: false;
+	-fx-horizontal-grid-lines-visible: false;
+	-fx-vertical-grid-lines-visible:false;
+	-fx-create-symbols: false;
+}
+
+.chart-symbol {
+	-fx-stroke-width: 3;
+	-fx-fill: white;
+}
+
+.chart-peak {
+	-fx-stroke: red; 
+}
+
+.chart-trough {
+	-fx-stroke: blue; 
+}
+
+.tooltip {
+	-fx-show-delay: 100ms;
+	-fx-hide-delay: 100ms;
+	-fx-show-duration: indefinite;
+}
+
+.pagination {
+	-fx-tooltip-visible: false;
+}
+
+/***********
+*  Table  *
+***********/
+
+.tree-table-view {
+	-fx-focus-traversable: false;
+}
+
 .tree-table-view .column-header .label {
 	-fx-wrap-text: true;
 }
@@ -27,6 +85,51 @@
 	-fx-wrap-text: true;
 }
 
+/**********
+*  Icon  *
+**********/
+
+.ikonli-font-icon {
+}
+
+.tab-icon {
+	-fx-rotate: 90;
+	-fx-icon-size: 20;
+	-fx-icon-color: white;
+}
+
+.refresh-button-icon {
+	-fx-icon-size: 30;
+	-fx-icon-color: black;
+}
+
+/************
+*  Button  *
+************/
+
+.jfx-button {
+	-fx-background-color: #c2e6dd;
+	-fx-font-size: 15;
+}
+
+.refresh-chart-button {
+	-fx-focus-traversable: false;
+	-fx-content-display: graphic-only;
+	-fx-background-radius: 30;
+	-fx-min-height: 50;
+	-fx-max-height: 50;
+	-fx-min-width: 50;
+	-fx-min-width: 50;
+}
+
+/***********
+*  Other  *
+***********/
+
+.jfx-combo-box {
+	-jfx-label-float: true;
+}
+
 .label {
 	-fx-font-size: 14;
 }
@@ -34,11 +137,6 @@
 .jfx-text-field {
 	-jfx-label-float: true;
 	-fx-font-size: 14;
-}
-
-.jfx-button {
-	-fx-background-color: #c2e6dd;
-	-fx-font-size: 15;
 }
 
 .jfx-progress-bar .bar {

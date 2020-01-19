@@ -6,11 +6,20 @@ import java.time.format.DateTimeFormatter;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Side;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -20,21 +29,28 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.materialdesign.MaterialDesign;
+
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXProgressBar;
+import com.jfoenix.controls.JFXTabPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.validation.DoubleValidator;
 import com.jfoenix.validation.IntegerValidator;
 import com.jfoenix.validation.RequiredFieldValidator;
 
+class StockAnalysisPane extends JFXTabPane {
 
-class StockAnalysisPane extends BorderPane {
+	private FontIcon refreshIcon, tableIcon, chartIcon;
 
 	// Package private for convenient access
 	JFXButton selectFileBtn;
 	JFXButton saveBtn;
 	JFXButton analyzeBtn;
+	JFXButton refreshBtn;
 
 	JFXTextField peakDurationInput;
 	JFXTextField peakDifferenceInput;
@@ -43,46 +59,37 @@ class StockAnalysisPane extends BorderPane {
 
 	JFXTreeTableView<Tuple> table;
 	JFXProgressBar progressBar;
+	JFXComboBox<Integer> comboBox;
+	LineChart<String, Number> chart;
+	Pagination pagination;
 	Label totalLbl;
 
 	StockAnalysisPane() {
 		initControls();
 
-		GridPane gridPane = createGridPane();
-		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
+		Tab tableTab = createTableTab();
+		tableTab.setClosable(false);
 
-		StackPane stackPane = new StackPane();
-		stackPane.getChildren().addAll(table);
+		Tab chartTab = createChartTab();
+		chartTab.setClosable(false);
 
-		HBox hBox = new HBox();
-		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
-		hBox.getStyleClass().add("button-container");
-		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveBtn, analyzeBtn);
-
-		VBox vBox = new VBox();
-		vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
-		vBox.getStyleClass().add("vbox");
-		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
-
-        getStyleClass().add("stock-price-analysis-pane");
-		setTop(gridPane);
-		setCenter(stackPane);
-		setBottom(vBox);
-	}
-
-	private GridPane createGridPane() {
-		ColumnConstraints col = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
-			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
-			HPos.CENTER, true);
-
-		GridPane gridPane = new GridPane();
-		gridPane.getColumnConstraints().addAll(col, col, col);
-		gridPane.getStyleClass().add("grid-pane");
-
-		return gridPane;
+		setSide(Side.LEFT);
+		setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+		getTabs().addAll(tableTab, chartTab);
 	}
 
 	private void initControls() {
+		// Icon
+		refreshIcon = FontIcon.of(MaterialDesign.MDI_REFRESH);
+		refreshIcon.getStyleClass().add("refresh-button-icon");
+
+		tableIcon = FontIcon.of(MaterialDesign.MDI_TABLE_LARGE);
+		tableIcon.getStyleClass().add("tab-icon");
+
+		chartIcon = FontIcon.of(MaterialDesign.MDI_CHART_LINE);
+		chartIcon.getStyleClass().add("tab-icon");
+
+		// Button
 		selectFileBtn = new JFXButton("Select file");
 
 		saveBtn = new JFXButton("Save");
@@ -91,6 +98,11 @@ class StockAnalysisPane extends BorderPane {
 		analyzeBtn = new JFXButton("Analyze");
 		analyzeBtn.setDefaultButton(true);
 
+		refreshBtn = new JFXButton(null, refreshIcon);
+		refreshBtn.setOpacity(0.3);
+		refreshBtn.getStyleClass().add("refresh-chart-button");
+
+		// TextField
 		IntegerValidator integerValidator = new IntegerValidator();
 		DoubleValidator doubleValidator = new DoubleValidator();
 		RequiredFieldValidator requiredFieldValidator = new RequiredFieldValidator("Input required");
@@ -112,7 +124,16 @@ class StockAnalysisPane extends BorderPane {
 		filePathInput.setPromptText("CSV file path");
 		filePathInput.getValidators().addAll(requiredFieldValidator, fileExistValidator);
 
+		// Other
+		chart = createLineChart();
 		table = createTreeTable();
+
+		comboBox = new JFXComboBox<>();
+		comboBox.setPromptText("Number of data drawn");
+		comboBox.getItems().addAll(100, 500, 1000, 1500);
+
+		pagination = new Pagination(1, 0);
+		pagination.setPageFactory(i -> chart);
 
 		progressBar = new JFXProgressBar(0);
 		progressBar.prefWidthProperty().bind(widthProperty());
@@ -120,18 +141,86 @@ class StockAnalysisPane extends BorderPane {
 		totalLbl = new Label("Total: 0");
 	}
 
+	private Tab createTableTab() {
+		GridPane gridPane = createGridPane();
+		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
+
+		HBox hBox = new HBox();
+		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
+		hBox.getStyleClass().add("button-container");
+		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveBtn, analyzeBtn);
+
+		VBox vBox = new VBox();
+		vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
+		vBox.getStyleClass().add("vbox");
+		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
+
+		BorderPane borderPane = new BorderPane();
+		borderPane.getStyleClass().add("stock-price-border-pane");
+		borderPane.setTop(gridPane);
+		borderPane.setCenter(table);
+		borderPane.setBottom(vBox);
+
+		Tab tab = new Tab(null, borderPane);
+		tab.setGraphic(tableIcon);
+
+		return tab;
+	}
+
+	private Tab createChartTab() {
+		AnchorPane anchorPane = new AnchorPane(comboBox);
+		AnchorPane.setLeftAnchor(comboBox, 10.0);
+		AnchorPane.setBottomAnchor(comboBox, 20.0);
+		anchorPane.setPickOnBounds(false);
+
+		StackPane stackPane = new StackPane();
+		stackPane.setMargin(refreshBtn, new Insets(10, 10, 0, 0));
+		stackPane.getChildren().addAll(pagination, refreshBtn, anchorPane);
+		stackPane.getStyleClass().add("stack-pane");
+
+		BorderPane borderPane = new BorderPane();
+		borderPane.setCenter(stackPane);
+		borderPane.getStyleClass().add("stock-price-border-pane");
+
+		Tab tab = new Tab(null, borderPane);
+		tab.setGraphic(chartIcon);
+
+		return tab;
+	}
+
+	private GridPane createGridPane() {
+		ColumnConstraints col = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
+			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
+			HPos.CENTER, true);
+
+		GridPane gridPane = new GridPane();
+		gridPane.getColumnConstraints().addAll(col, col, col);
+		gridPane.getStyleClass().add("grid-pane");
+
+		return gridPane;
+	}
+
+	private LineChart<String, Number> createLineChart() {
+		CategoryAxis xAxis = new CategoryAxis();
+		NumberAxis yAxis = new NumberAxis();
+
+		chart = new LineChart<>(xAxis, yAxis);
+		chart.setAnimated(false);
+		chart.getData().add(new XYChart.Series<>());
+
+		return chart;
+	}
+
 	@SuppressWarnings("unchecked")
 	private JFXTreeTableView<Tuple> createTreeTable() {
 		Callback<TreeTableColumn<Tuple, LocalDate>, TreeTableCell<Tuple, LocalDate>> dateFormatterCellFactory = col -> new TreeTableCell<>() {
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY/MM/dd");
-
 			@Override
 			protected void updateItem(LocalDate value, boolean empty) {
 				super.updateItem(value, empty);
 				if (empty) {
 					setText(null);
 				} else {
-					setText(value.format(formatter));
+					setText(value.format(Util.DATE_FORMATTER));
 				}
 			}
 		};
@@ -177,7 +266,6 @@ class StockAnalysisPane extends BorderPane {
 
 		JFXTreeTableView<Tuple> table = new JFXTreeTableView<>(new TreeItem<Tuple>(null));
 		table.setShowRoot(false);
-		table.setFocusTraversable(false);
 		table.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
 		table.getColumns().addAll(crashDateCol, peakDateCol,
 			peakStockPriceCol, troughDateCol, 
