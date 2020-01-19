@@ -68,6 +68,19 @@
 	-fx-tooltip-visible: false;
 }
 
+.pagination .button {
+	-fx-background-color: #c2e6dd;
+}
+
+.pagination .toggle-button {
+	-fx-background-color: #c2e6dd;
+}
+
+.pagination .toggle-button:selected {
+	-fx-background-color: olivedrab;
+	-fx-text-fill: white;
+}
+
 /***********
 *  Table  *
 ***********/
