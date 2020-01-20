@@ -1,8 +1,19 @@
 package stockanalysis;
 
+import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.lang.InterruptedException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -14,19 +25,26 @@ import java.util.stream.Collectors;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.RotateTransition;
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.WritableImage;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import javax.imageio.ImageIO;
 
 import org.jooq.lambda.Unchecked;
 
@@ -53,7 +71,7 @@ public class Controller {
 	public void init() {
 		tupleProperty.addListener((obs, oldValue, newValue) -> {
 			// Update save button
-			root.saveBtn.setDisable(newValue.isEmpty());
+			root.saveAnalysisBtn.setDisable(newValue.isEmpty());
 
 			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
@@ -62,7 +80,7 @@ public class Controller {
 			updateTable(newValue);
 		});
 
-		root.saveBtn.setOnAction(e -> {
+		root.saveAnalysisBtn.setOnAction(e -> {
 			FileChooser fileChooser = new FileChooser();
 			fileChooser.setTitle("Save Analysis Result");
 			fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
@@ -135,6 +153,15 @@ public class Controller {
 		});
 
 		setRefreshBtnBehavior();
+
+		root.saveChartBtn.setOnAction(e -> {
+			SaveChartTask saveChartTask = new SaveChartTask(600, 400, new File("/tmp/chart.png"), tupleProperty.get(), data);
+			saveChartTask.setOnSucceeded(System.out::println);
+
+			Thread thread = new Thread(saveChartTask);
+			thread.setDaemon(true);
+			thread.start();
+		});
 	}
 
 	private void setRefreshBtnBehavior() {
@@ -173,7 +200,7 @@ public class Controller {
 		Pagination pagination = root.pagination;
 
 		pagination.setPageFactory(i -> {
-			updateChart(drawnDataNumber, i, newTuples);
+			updateChart(drawnDataNumber, i, root.chart, newTuples);
 			return root.chart;
 		});
 
@@ -186,7 +213,7 @@ public class Controller {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void updateChart(int drawnDataNumber, int skipFactor, List<Tuple> newTuples) {
+	private void updateChart(int drawnDataNumber, int skipFactor, LineChart<String, Number> chart, List<Tuple> newTuples) {
 		Set[] peakTroughs = newTuples.stream()
 			.map(t -> {
 				Set<StockPrice> peak = new HashSet<>();
@@ -228,7 +255,7 @@ public class Controller {
 			})
 			.collect(Collectors.toList());
 
-		root.chart.getData()
+		chart.getData()
 			.get(0)
 			.getData()
 			.setAll(chartData);
@@ -256,5 +283,90 @@ public class Controller {
 		newTuples.stream()
 			.map(TreeItem::new)
 			.forEach(rootItem.getChildren()::add);
+	}
+
+	private static class SaveChartTask extends Task<Void> {
+		
+		private int width, height;
+		private File path;
+		private List<Tuple> tuples;
+		private List<StockPrice> data;
+
+		private SaveChartTask(int width, int height, File path, List<Tuple> tuples, List<StockPrice> data) {
+			this.width = width;
+			this.height = height;
+			this.path = path;
+			this.tuples = tuples;
+			this.data = data;
+		}
+
+		@Override
+		protected Void call() throws Exception {
+			// Launch another javafx application to save chart
+			// So that the process of rendering chart can't block the main UI thread
+			Process process = createProcessBuilder().start();
+
+			// Use Internet to send the chart data
+			ServerSocket serverSocket = createServerSocket();
+			Socket socket = serverSocket.accept();
+			sendChartData(socket.getOutputStream());
+
+			process.waitFor();
+
+			return null;
+		}
+
+		private ServerSocket createServerSocket() throws Exception {
+			int port = 9487;
+			int backlog = 1;
+			InetAddress localhost = InetAddress.getLocalHost();
+
+			return new ServerSocket(port, backlog, localhost);
+		}
+
+		private ProcessBuilder createProcessBuilder() {
+			String javaBinary = getJavaBinaryPath();
+			String classpath = System.getProperty("java.class.path");
+			String className = ChartSaver.class.getCanonicalName();
+
+			return new ProcessBuilder(javaBinary, "-cp", classpath, className)
+				.redirectError(ProcessBuilder.Redirect.INHERIT)
+				.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+		}
+
+		private String getJavaBinaryPath() {
+			String separator = System.getProperty("file.separator");
+
+			StringBuilder javaPath = new StringBuilder();
+			javaPath.append(System.getProperty("java.home"))
+				.append(separator)
+				.append("bin")
+				.append(separator)
+				.append("java");
+
+			if (isWindows()) {
+				javaPath.append(".exe");
+			}
+
+			return javaPath.toString();
+		}
+
+		private boolean isWindows() {
+			return System.getProperty("os.name")
+				.toLowerCase()
+				.contains("windows");
+		}
+
+		private void sendChartData(OutputStream sout) throws IOException {
+			ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(sout));
+
+			try(out) {
+				out.writeInt(width);
+				out.writeInt(height);
+				out.writeObject(path);
+				out.writeObject(tuples);
+				out.writeObject(data);
+			}
+		}
 	}
 }

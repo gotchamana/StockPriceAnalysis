@@ -1,5 +1,9 @@
 package stockanalysis;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,7 +18,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
-public class Tuple extends RecursiveTreeObject<Tuple> implements Cloneable {
+public class Tuple extends RecursiveTreeObject<Tuple> implements Cloneable, Serializable {
+
+	private static final long serialVersionUID = 95438933L;
 
 	private StockPrice peak;
 	private StockPrice trough;
@@ -58,5 +64,13 @@ public class Tuple extends RecursiveTreeObject<Tuple> implements Cloneable {
 	@Override
 	public Object clone() {
 		return new Tuple(peak, trough, crash);
+	}
+
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
 	}
 }

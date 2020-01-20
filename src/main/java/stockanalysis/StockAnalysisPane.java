@@ -48,9 +48,10 @@ class StockAnalysisPane extends JFXTabPane {
 
 	// Package private for convenient access
 	JFXButton selectFileBtn;
-	JFXButton saveBtn;
+	JFXButton saveAnalysisBtn;
 	JFXButton analyzeBtn;
 	JFXButton refreshBtn;
+	JFXButton saveChartBtn;
 
 	JFXTextField peakDurationInput;
 	JFXTextField peakDifferenceInput;
@@ -92,8 +93,8 @@ class StockAnalysisPane extends JFXTabPane {
 		// Button
 		selectFileBtn = new JFXButton("Select file");
 
-		saveBtn = new JFXButton("Save");
-		saveBtn.setDisable(true);
+		saveAnalysisBtn = new JFXButton("Save");
+		saveAnalysisBtn.setDisable(true);
 
 		analyzeBtn = new JFXButton("Analyze");
 		analyzeBtn.setDefaultButton(true);
@@ -101,6 +102,9 @@ class StockAnalysisPane extends JFXTabPane {
 		refreshBtn = new JFXButton(null, refreshIcon);
 		refreshBtn.setOpacity(0.3);
 		refreshBtn.getStyleClass().add("refresh-chart-button");
+
+		saveChartBtn = new JFXButton("Save");
+		// saveChartBtn.setDisable(true);
 
 		// TextField
 		IntegerValidator integerValidator = new IntegerValidator();
@@ -139,65 +143,6 @@ class StockAnalysisPane extends JFXTabPane {
 		progressBar.prefWidthProperty().bind(widthProperty());
 
 		totalLbl = new Label("Total: 0");
-	}
-
-	private Tab createTableTab() {
-		GridPane gridPane = createGridPane();
-		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
-
-		HBox hBox = new HBox();
-		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
-		hBox.getStyleClass().add("button-container");
-		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveBtn, analyzeBtn);
-
-		VBox vBox = new VBox();
-		vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
-		vBox.getStyleClass().add("vbox");
-		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
-
-		BorderPane borderPane = new BorderPane();
-		borderPane.getStyleClass().add("stock-price-border-pane");
-		borderPane.setTop(gridPane);
-		borderPane.setCenter(table);
-		borderPane.setBottom(vBox);
-
-		Tab tab = new Tab(null, borderPane);
-		tab.setGraphic(tableIcon);
-
-		return tab;
-	}
-
-	private Tab createChartTab() {
-		AnchorPane anchorPane = new AnchorPane(comboBox);
-		AnchorPane.setLeftAnchor(comboBox, 10.0);
-		AnchorPane.setBottomAnchor(comboBox, 20.0);
-		anchorPane.setPickOnBounds(false);
-
-		StackPane stackPane = new StackPane();
-		stackPane.setMargin(refreshBtn, new Insets(10, 10, 0, 0));
-		stackPane.getChildren().addAll(pagination, refreshBtn, anchorPane);
-		stackPane.getStyleClass().add("stack-pane");
-
-		BorderPane borderPane = new BorderPane();
-		borderPane.setCenter(stackPane);
-		borderPane.getStyleClass().add("stock-price-border-pane");
-
-		Tab tab = new Tab(null, borderPane);
-		tab.setGraphic(chartIcon);
-
-		return tab;
-	}
-
-	private GridPane createGridPane() {
-		ColumnConstraints col = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
-			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
-			HPos.CENTER, true);
-
-		GridPane gridPane = new GridPane();
-		gridPane.getColumnConstraints().addAll(col, col, col);
-		gridPane.getStyleClass().add("grid-pane");
-
-		return gridPane;
 	}
 
 	private LineChart<String, Number> createLineChart() {
@@ -273,5 +218,66 @@ class StockAnalysisPane extends JFXTabPane {
 			peakTroughDurationCol);
 
 		return table;
+	}
+
+	private Tab createTableTab() {
+		GridPane gridPane = createGridPane();
+		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
+
+		HBox hBox = new HBox();
+		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
+		hBox.getStyleClass().add("button-container");
+		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveAnalysisBtn, analyzeBtn);
+
+		VBox vBox = new VBox();
+		vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
+		vBox.getStyleClass().add("vbox");
+		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
+
+		BorderPane borderPane = new BorderPane();
+		borderPane.getStyleClass().add("stock-price-border-pane");
+		borderPane.setTop(gridPane);
+		borderPane.setCenter(table);
+		borderPane.setBottom(vBox);
+
+		Tab tab = new Tab(null, borderPane);
+		tab.setGraphic(tableIcon);
+
+		return tab;
+	}
+
+	private GridPane createGridPane() {
+		ColumnConstraints col = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
+			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
+			HPos.CENTER, true);
+
+		GridPane gridPane = new GridPane();
+		gridPane.getColumnConstraints().addAll(col, col, col);
+		gridPane.getStyleClass().add("grid-pane");
+
+		return gridPane;
+	}
+
+	private Tab createChartTab() {
+		AnchorPane anchorPane = new AnchorPane(comboBox, saveChartBtn);
+		anchorPane.setPickOnBounds(false);
+		AnchorPane.setLeftAnchor(comboBox, 10.0);
+		AnchorPane.setBottomAnchor(comboBox, 20.0);
+		AnchorPane.setRightAnchor(saveChartBtn, 10.0);
+		AnchorPane.setBottomAnchor(saveChartBtn, 20.0);
+
+		StackPane stackPane = new StackPane();
+		stackPane.setMargin(refreshBtn, new Insets(10, 10, 0, 0));
+		stackPane.getChildren().addAll(pagination, refreshBtn, anchorPane);
+		stackPane.getStyleClass().add("stack-pane");
+
+		BorderPane borderPane = new BorderPane();
+		borderPane.setCenter(stackPane);
+		borderPane.getStyleClass().add("stock-price-border-pane");
+
+		Tab tab = new Tab(null, borderPane);
+		tab.setGraphic(chartIcon);
+
+		return tab;
 	}
 }

@@ -106,7 +106,7 @@
                                   <NumberAxis side="LEFT" />
                                 </yAxis>
                               </LineChart>
-                              <Pagination maxPageIndicatorCount="5" pageCount="1" />
+                              <Pagination maxPageIndicatorCount="5" pageCount="3" />
                            </children>
                         </VBox>
                         <JFXButton contentDisplay="GRAPHIC_ONLY" styleClass="refresh-chart-button">
@@ -116,6 +116,7 @@
                         </JFXButton>
                         <AnchorPane pickOnBounds="false">
                            <children>
+                              <JFXButton AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="10.0" />
                               <JFXComboBox labelFloat="true" promptText="ComboBox" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="10.0" />
                            </children>
                         </AnchorPane>
