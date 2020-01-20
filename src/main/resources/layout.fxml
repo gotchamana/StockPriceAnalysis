@@ -24,7 +24,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<JFXTabPane side="LEFT" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<JFXTabPane focusTraversable="false" side="LEFT" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <tabs>
       <Tab closable="false" text="Tab1">
          <content>
@@ -32,12 +32,12 @@
                <bottom>
                   <VBox alignment="CENTER_RIGHT" styleClass="vbox">
                      <children>
-                        <Label text="Label">
+                        <Label focusTraversable="false" text="Label">
                            <VBox.margin>
                               <Insets right="5.0" top="5.0" />
                            </VBox.margin>
                         </Label>
-                        <HBox alignment="CENTER_RIGHT" fillHeight="false" spacing="10.0" styleClass="button-container">
+                        <HBox alignment="CENTER_RIGHT" fillHeight="false" spacing="10.0" styleClass="table-tab-hbox">
                            <children>
                               <JFXTextField promptText="TextField" styleClass="jfx-text-field" HBox.hgrow="SOMETIMES" />
                               <JFXButton styleClass="jfx-button" />
@@ -45,7 +45,7 @@
                               <JFXButton styleClass="jfx-button" />
                            </children>
                         </HBox>
-                        <JFXProgressBar progress="0.09">
+                        <JFXProgressBar focusTraversable="false" progress="0.09">
                            <VBox.margin>
                               <Insets />
                            </VBox.margin>
@@ -106,18 +106,25 @@
                                   <NumberAxis side="LEFT" />
                                 </yAxis>
                               </LineChart>
-                              <Pagination maxPageIndicatorCount="5" pageCount="3" />
+                              <Pagination maxPageIndicatorCount="5" pageCount="5" />
                            </children>
                         </VBox>
-                        <JFXButton contentDisplay="GRAPHIC_ONLY" styleClass="refresh-chart-button">
+                        <JFXButton contentDisplay="GRAPHIC_ONLY" focusTraversable="false" styleClass="refresh-chart-button">
                            <StackPane.margin>
                               <Insets right="10.0" top="10.0" />
                            </StackPane.margin>
                         </JFXButton>
                         <AnchorPane pickOnBounds="false">
                            <children>
-                              <JFXButton AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="10.0" />
-                              <JFXComboBox labelFloat="true" promptText="ComboBox" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="10.0" />
+                              <JFXProgressBar focusTraversable="false" progress="0.45" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+                              <HBox layoutX="607.0" layoutY="463.0" spacing="10.0" styleClass="chart-tab-hbox" AnchorPane.bottomAnchor="30.0" AnchorPane.rightAnchor="10.0">
+                                 <children>
+                                    <JFXTextField labelFloat="true" prefColumnCount="5" promptText="Width" styleClass="chart-dimension-text-field" />
+                                    <JFXTextField labelFloat="true" prefColumnCount="5" promptText="Height" styleClass="chart-dimension-text-field" />
+                                    <JFXButton />
+                                 </children>
+                              </HBox>
+                              <JFXComboBox promptText="ComboBox" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="10.0" />
                            </children>
                         </AnchorPane>
                      </children>

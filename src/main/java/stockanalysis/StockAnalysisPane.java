@@ -57,9 +57,13 @@ class StockAnalysisPane extends JFXTabPane {
 	JFXTextField peakDifferenceInput;
 	JFXTextField crashRateInput;
 	JFXTextField filePathInput;
+	JFXTextField widthInput;
+	JFXTextField heightInput;
+
+	JFXProgressBar progressBar;
+	JFXProgressBar chartProgressBar;
 
 	JFXTreeTableView<Tuple> table;
-	JFXProgressBar progressBar;
 	JFXComboBox<Integer> comboBox;
 	LineChart<String, Number> chart;
 	Pagination pagination;
@@ -104,7 +108,7 @@ class StockAnalysisPane extends JFXTabPane {
 		refreshBtn.getStyleClass().add("refresh-chart-button");
 
 		saveChartBtn = new JFXButton("Save");
-		// saveChartBtn.setDisable(true);
+		saveChartBtn.setDisable(true);
 
 		// TextField
 		IntegerValidator integerValidator = new IntegerValidator();
@@ -128,6 +132,16 @@ class StockAnalysisPane extends JFXTabPane {
 		filePathInput.setPromptText("CSV file path");
 		filePathInput.getValidators().addAll(requiredFieldValidator, fileExistValidator);
 
+		widthInput = new JFXTextField();
+		widthInput.setPromptText("Width");
+		widthInput.getValidators().addAll(requiredFieldValidator, integerValidator);
+		widthInput.getStyleClass().add("chart-dimension-text-field");
+
+		heightInput = new JFXTextField();
+		heightInput.setPromptText("Height");
+		heightInput.getValidators().addAll(requiredFieldValidator, integerValidator);
+		heightInput.getStyleClass().add("chart-dimension-text-field");
+
 		// Other
 		chart = createLineChart();
 		table = createTreeTable();
@@ -135,12 +149,15 @@ class StockAnalysisPane extends JFXTabPane {
 		comboBox = new JFXComboBox<>();
 		comboBox.setPromptText("Number of data drawn");
 		comboBox.getItems().addAll(100, 500, 1000, 1500);
+		comboBox.getValidators().add(requiredFieldValidator);
 
 		pagination = new Pagination(1, 0);
 		pagination.setPageFactory(i -> chart);
 
 		progressBar = new JFXProgressBar(0);
 		progressBar.prefWidthProperty().bind(widthProperty());
+
+		chartProgressBar = new JFXProgressBar(0);
 
 		totalLbl = new Label("Total: 0");
 	}
@@ -226,7 +243,7 @@ class StockAnalysisPane extends JFXTabPane {
 
 		HBox hBox = new HBox();
 		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
-		hBox.getStyleClass().add("button-container");
+		hBox.getStyleClass().addAll("hbox", "table-tab-hbox");
 		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveAnalysisBtn, analyzeBtn);
 
 		VBox vBox = new VBox();
@@ -259,12 +276,22 @@ class StockAnalysisPane extends JFXTabPane {
 	}
 
 	private Tab createChartTab() {
-		AnchorPane anchorPane = new AnchorPane(comboBox, saveChartBtn);
+		HBox hBox = new HBox();
+		hBox.getChildren().addAll(widthInput, heightInput, saveChartBtn);
+		hBox.getStyleClass().addAll("hbox");
+
+		AnchorPane anchorPane = new AnchorPane(comboBox, hBox, chartProgressBar);
 		anchorPane.setPickOnBounds(false);
+
 		AnchorPane.setLeftAnchor(comboBox, 10.0);
-		AnchorPane.setBottomAnchor(comboBox, 20.0);
-		AnchorPane.setRightAnchor(saveChartBtn, 10.0);
-		AnchorPane.setBottomAnchor(saveChartBtn, 20.0);
+		AnchorPane.setBottomAnchor(comboBox, 30.0);
+
+		AnchorPane.setRightAnchor(hBox, 10.0);
+		AnchorPane.setBottomAnchor(hBox, 30.0);
+
+		AnchorPane.setLeftAnchor(chartProgressBar, 0.0);
+		AnchorPane.setRightAnchor(chartProgressBar, 0.0);
+		AnchorPane.setBottomAnchor(chartProgressBar, 0.0);
 
 		StackPane stackPane = new StackPane();
 		stackPane.setMargin(refreshBtn, new Insets(10, 10, 0, 0));

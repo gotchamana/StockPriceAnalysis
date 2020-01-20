@@ -49,6 +49,7 @@ import javax.imageio.ImageIO;
 import org.jooq.lambda.Unchecked;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 
 public class Controller {
@@ -70,8 +71,11 @@ public class Controller {
 
 	public void init() {
 		tupleProperty.addListener((obs, oldValue, newValue) -> {
-			// Update save button
+			// Update save analysis button
 			root.saveAnalysisBtn.setDisable(newValue.isEmpty());
+
+			// Update save chart button
+			root.saveChartBtn.setDisable(newValue.isEmpty());
 
 			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
@@ -155,12 +159,29 @@ public class Controller {
 		setRefreshBtnBehavior();
 
 		root.saveChartBtn.setOnAction(e -> {
-			SaveChartTask saveChartTask = new SaveChartTask(600, 400, new File("/tmp/chart.png"), tupleProperty.get(), data);
-			saveChartTask.setOnSucceeded(System.out::println);
+			JFXTextField widthInput = root.widthInput;
+			JFXTextField heightInput = root.heightInput;
 
-			Thread thread = new Thread(saveChartTask);
-			thread.setDaemon(true);
-			thread.start();
+			if (widthInput.validate() & heightInput.validate()) {
+				int width = Integer.parseInt(widthInput.getText());
+				int height = Integer.parseInt(heightInput.getText());
+
+				FileChooser fileChooser = new FileChooser();
+				fileChooser.setTitle("Save Chart As Image");
+				fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+				fileChooser.setInitialFileName("chart.png");
+
+				Optional.ofNullable(fileChooser.showSaveDialog(stage))
+					.ifPresent(file -> {
+						SaveChartTask saveChartTask = new SaveChartTask(width, height, file, tupleProperty.get(), data);
+						saveChartTask.setOnRunning(event -> root.chartProgressBar.setProgress(-1));
+						saveChartTask.setOnSucceeded(event -> root.chartProgressBar.setProgress(0));
+
+						Thread thread = new Thread(saveChartTask);
+						thread.setDaemon(true);
+						thread.start();
+					});
+			}
 		});
 	}
 
@@ -195,21 +216,25 @@ public class Controller {
 	}
 
 	private void updatePagination(List<Tuple> newTuples) {
-		int drawnDataNumber = Optional.ofNullable(root.comboBox.getSelectionModel().getSelectedItem()).orElse(1000);
+		JFXComboBox<Integer> comboBox = root.comboBox;
 
-		Pagination pagination = root.pagination;
+		if (comboBox.validate()) {
+			int drawnDataNumber = comboBox.getSelectionModel().getSelectedItem();
 
-		pagination.setPageFactory(i -> {
-			updateChart(drawnDataNumber, i, root.chart, newTuples);
-			return root.chart;
-		});
+			Pagination pagination = root.pagination;
 
-		int pageCount = data.size() / drawnDataNumber;
-		pageCount = (data.size() % drawnDataNumber == 0) ? pageCount : pageCount + 1;
-		pagination.setPageCount(pageCount);
+			pagination.setPageFactory(i -> {
+				updateChart(drawnDataNumber, i, root.chart, newTuples);
+				return root.chart;
+			});
 
-		pagination.setCurrentPageIndex(0);
-		pagination.setMaxPageIndicatorCount(5);
+			int pageCount = data.size() / drawnDataNumber;
+			pageCount = (data.size() % drawnDataNumber == 0) ? pageCount : pageCount + 1;
+			pagination.setPageCount(pageCount);
+
+			pagination.setCurrentPageIndex(0);
+			pagination.setMaxPageIndicatorCount(5);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
