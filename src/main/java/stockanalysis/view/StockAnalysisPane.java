@@ -146,7 +146,7 @@ public class StockAnalysisPane extends JFXTabPane {
 		heightInput.getStyleClass().add("chart-dimension-text-field");
 
 		// Other
-		chart = createLineChart();
+		chart = Util.createLineChart();
 		table = createTreeTable();
 
 		comboBox = new JFXComboBox<>();
@@ -163,17 +163,6 @@ public class StockAnalysisPane extends JFXTabPane {
 		chartProgressBar = new JFXProgressBar(0);
 
 		totalLbl = new Label("Total: 0");
-	}
-
-	private LineChart<String, Number> createLineChart() {
-		CategoryAxis xAxis = new CategoryAxis();
-		NumberAxis yAxis = new NumberAxis();
-
-		chart = new LineChart<>(xAxis, yAxis);
-		chart.setAnimated(false);
-		chart.getData().add(new XYChart.Series<>());
-
-		return chart;
 	}
 
 	@SuppressWarnings("unchecked")

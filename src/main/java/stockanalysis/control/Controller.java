@@ -58,6 +58,7 @@ import stockanalysis.model.Tuple;
 import stockanalysis.util.ChartSaver;
 import stockanalysis.util.Util;
 import stockanalysis.view.StockAnalysisPane;
+import javafx.scene.Group;
 
 public class Controller {
 	
@@ -87,7 +88,6 @@ public class Controller {
 			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
 
-			// updatePagination(newValue);
 			updateTable(newValue);
 		});
 
@@ -229,7 +229,7 @@ public class Controller {
 			Pagination pagination = root.pagination;
 
 			pagination.setPageFactory(i -> {
-				updateChart(drawnDataNumber, i, root.chart, newTuples);
+				Util.updateChart(drawnDataNumber, i, root.chart, newTuples, data, true);
 				return root.chart;
 			});
 
@@ -240,70 +240,6 @@ public class Controller {
 			pagination.setCurrentPageIndex(0);
 			pagination.setMaxPageIndicatorCount(5);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private void updateChart(int drawnDataNumber, int skipFactor, LineChart<String, Number> chart, List<Tuple> newTuples) {
-		Set[] peakTroughs = newTuples.stream()
-			.map(t -> {
-				Set<StockPrice> peak = new HashSet<>();
-				peak.add(t.getPeak());
-
-				Set<StockPrice> trough = new HashSet<>();
-				trough.add(t.getTrough());
-
-				return new Set[] { peak, trough };
-			})
-			.reduce(new Set[] { new HashSet<StockPrice>(), new HashSet<StockPrice>() }, (r, e) -> {
-				r[0].addAll(e[0]);
-				r[1].addAll(e[1]);
-
-				return r;
-			});
-
-		List<XYChart.Data<String, Number>> chartData = data.stream()
-			.skip(drawnDataNumber * skipFactor)
-			.limit(drawnDataNumber)
-			.map(sp -> {
-				String date = sp.getDate().format(Util.DATE_FORMATTER);
-				Number price = sp.getPrice();
-
-				return new XYChart.Data<>(date, price, sp);
-			})
-
-			// Configure XYChart.Data
-			.peek(spData -> {
-				StockPrice sp = (StockPrice) spData.getExtraValue();
-
-				if (peakTroughs[0].contains(sp)) {
-					Node symbol = createSymbol("Peak", sp);
-					spData.setNode(symbol);
-				} else if (peakTroughs[1].contains(sp)) {
-					Node symbol = createSymbol("Trough", sp);
-					spData.setNode(symbol);
-				}
-			})
-			.collect(Collectors.toList());
-
-		chart.getData()
-			.get(0)
-			.getData()
-			.setAll(chartData);
-	}
-
-	private Node createSymbol(String type, StockPrice sp) {
-		Circle symbol = new Circle(5);
-		symbol.setOnMouseEntered(e -> symbol.setRadius(6));
-		symbol.setOnMouseExited(e -> symbol.setRadius(5));
-		symbol.getStyleClass().addAll("chart-symbol", "chart-" + type.toLowerCase());
-
-		Tooltip tooltip = new Tooltip(String.format("%s: %s%n%s: %s%n%s: %.2f",
-			"Type", type,
-			"Date", sp.getDate().format(Util.DATE_FORMATTER),
-			"Price", sp.getPrice()));
-		Tooltip.install(symbol, tooltip);
-
-		return symbol;
 	}
 
 	private void updateTable(List<Tuple> newTuples) {

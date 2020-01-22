@@ -8,9 +8,20 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Tooltip;
+import javafx.scene.shape.Circle;
 
 import org.jooq.lambda.Unchecked;
 
@@ -70,5 +81,97 @@ public class Util {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static LineChart<String, Number> createLineChart() {
+		CategoryAxis xAxis = new CategoryAxis();
+		NumberAxis yAxis = new NumberAxis();
+
+		LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+		chart.setAnimated(false);
+		chart.getData().add(new XYChart.Series<>());
+
+		return chart;
+	}
+
+	public static void updateChart(int drawnDataNumber, int skipFactor, LineChart<String, Number> chart, List<Tuple> newTuples, List<StockPrice> data, boolean tooltip) {
+		Set[] peakTroughs = groupPeaksTroughs(newTuples);
+		List<XYChart.Data<String, Number>> chartData = convertToXYData(drawnDataNumber, skipFactor, data);
+
+		addSymbols(peakTroughs, chartData, tooltip);
+
+		chart.getData()
+			.get(0)
+			.getData()
+			.setAll(chartData);
+	}
+
+	private static Set[] groupPeaksTroughs(List<Tuple> tuples) {
+		Set<StockPrice> peaks = new HashSet<>();
+		Set<StockPrice> troughs = new HashSet<>();
+
+		tuples.forEach(tuple -> {
+			peaks.add(tuple.getPeak());
+			troughs.add(tuple.getTrough());
+		});
+
+		return new Set[]{ peaks, troughs };
+	}
+
+	private static List<XYChart.Data<String, Number>> convertToXYData(int drawnDataNumber, int skipFactor, List<StockPrice> data) {
+		List<XYChart.Data<String, Number>> chartData = data.stream()
+			.skip(drawnDataNumber * skipFactor)
+			.limit(drawnDataNumber)
+			.map(sp -> {
+				String date = sp.getDate().format(Util.DATE_FORMATTER);
+				Number price = sp.getPrice();
+
+				return new XYChart.Data<>(date, price, sp);
+			})
+			.collect(Collectors.toList());
+
+		return chartData;
+	}
+
+	private static void addSymbols(Set[] peakTroughs, List<XYChart.Data<String, Number>> chartData, boolean tooltip) {
+		chartData.forEach(spData -> {
+			StockPrice sp = (StockPrice) spData.getExtraValue();
+			Node symbol;
+
+			if (peakTroughs[0].contains(sp)) {
+				symbol = createSymbol(StockPrice.Type.PEAK, sp, tooltip);
+			} else if (peakTroughs[1].contains(sp)) {
+				symbol = createSymbol(StockPrice.Type.TROUGH, sp, tooltip);
+			} else {
+				symbol = createSymbol(StockPrice.Type.NONE, sp, tooltip);
+			}
+
+			spData.setNode(symbol);
+		});
+	}
+
+	private static Node createSymbol(StockPrice.Type type, StockPrice sp, boolean tooltip) {
+		if (type.equals(StockPrice.Type.NONE)) {
+			return new Group();
+		}
+
+		Circle symbol = new Circle(5);
+		symbol.setOnMouseEntered(e -> symbol.setRadius(6));
+		symbol.setOnMouseExited(e -> symbol.setRadius(5));
+		symbol.getStyleClass().addAll("chart-symbol", "chart-" + type.toString().toLowerCase());
+
+		if (tooltip) {
+			installTooltips(symbol, type, sp);
+		}
+
+		return symbol;
+	}
+
+	private static void installTooltips(Node symbol, StockPrice.Type type, StockPrice sp) {
+		Tooltip tooltip = new Tooltip(String.format("%s: %s%n%s: %s%n%s: %.2f",
+			"Type", type.toString(),
+			"Date", sp.getDate().format(DATE_FORMATTER),
+			"Price", sp.getPrice()));
+		Tooltip.install(symbol, tooltip);
 	}
 }

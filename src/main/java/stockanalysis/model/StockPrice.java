@@ -11,6 +11,27 @@ import lombok.Value;
 @Value
 public class StockPrice implements Comparable<StockPrice>, Serializable {
 	
+	public static enum Type {
+		NONE, PEAK, TROUGH;
+
+		@Override
+		public String toString() {
+			return capitalizeFirstLetter(super.toString().toLowerCase());
+		}
+
+		private String capitalizeFirstLetter(String str) {
+			if (str.isEmpty()) {
+				return str;
+			}
+
+			StringBuilder sb = new StringBuilder(str);
+			char capitalLetter = Character.toUpperCase(sb.charAt(0));
+			sb.setCharAt(0, capitalLetter);
+
+			return sb.toString();
+		}
+	}
+
 	private static final long serialVersionUID = 43204820L;
 
 	private LocalDate date;

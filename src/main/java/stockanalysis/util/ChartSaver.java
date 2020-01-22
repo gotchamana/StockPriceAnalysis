@@ -49,8 +49,8 @@ public class ChartSaver extends Application {
 			Socket socket = createSocket();
 			receiveChartData(socket.getInputStream());
 
-			LineChart<String, Number> chart = createChart();
-			updateChart(data.size(), 0, chart, tuples);
+			LineChart<String, Number> chart = Util.createLineChart();
+			Util.updateChart(data.size(), 0, chart, tuples, data, false);
 
 			Scene scene = new Scene(chart, width, height);
 			scene.getStylesheets().add("/style.css");
@@ -79,74 +79,6 @@ public class ChartSaver extends Application {
 			tuples = (List) in.readObject();
 			data = (List) in.readObject();
 		}
-	}
-
-	private LineChart<String, Number> createChart() {
-		CategoryAxis xAxis = new CategoryAxis();
-		NumberAxis yAxis = new NumberAxis();
-
-		LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-		chart.setAnimated(false);
-		chart.setCreateSymbols(false);
-		chart.getData().add(new XYChart.Series<>());
-
-		return chart;
-	}
-
-	@SuppressWarnings("unchecked")
-	private void updateChart(int drawnDataNumber, int skipFactor, LineChart<String, Number> chart, List<Tuple> newTuples) {
-		Set[] peakTroughs = newTuples.stream()
-			.map(t -> {
-				Set<StockPrice> peak = new HashSet<>();
-				peak.add(t.getPeak());
-
-				Set<StockPrice> trough = new HashSet<>();
-				trough.add(t.getTrough());
-
-				return new Set[] { peak, trough };
-			})
-			.reduce(new Set[] { new HashSet<StockPrice>(), new HashSet<StockPrice>() }, (r, e) -> {
-				r[0].addAll(e[0]);
-				r[1].addAll(e[1]);
-
-				return r;
-			});
-
-		List<XYChart.Data<String, Number>> chartData = data.stream()
-			.skip(drawnDataNumber * skipFactor)
-			.limit(drawnDataNumber)
-			.map(sp -> {
-				String date = sp.getDate().format(Util.DATE_FORMATTER);
-				Number price = sp.getPrice();
-
-				return new XYChart.Data<>(date, price, sp);
-			})
-
-			// Configure XYChart.Data
-			.peek(spData -> {
-				StockPrice sp = (StockPrice) spData.getExtraValue();
-
-				if (peakTroughs[0].contains(sp)) {
-					Node symbol = createSymbol("Peak");
-					spData.setNode(symbol);
-				} else if (peakTroughs[1].contains(sp)) {
-					Node symbol = createSymbol("Trough");
-					spData.setNode(symbol);
-				}
-			})
-			.collect(Collectors.toList());
-
-		chart.getData()
-			.get(0)
-			.getData()
-			.setAll(chartData);
-	}
-
-	private Node createSymbol(String type) {
-		Circle symbol = new Circle(5);
-		symbol.getStyleClass().addAll("chart-symbol", "chart-" + type.toLowerCase());
-
-		return symbol;
 	}
 
 	private void saveChart(Scene scene) throws IOException {
