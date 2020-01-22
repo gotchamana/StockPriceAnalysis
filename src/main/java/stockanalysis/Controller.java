@@ -85,11 +85,7 @@ public class Controller {
 		});
 
 		root.saveAnalysisBtn.setOnAction(e -> {
-			FileChooser fileChooser = new FileChooser();
-			fileChooser.setTitle("Save Analysis Result");
-			fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-			fileChooser.setInitialFileName("analysis.txt");
-
+			FileChooser fileChooser = createFileChooser("Save Analysis Result", "analysis.txt");
 			Optional.ofNullable(fileChooser.showSaveDialog(stage))
 				.ifPresent(file -> {
 					Task<Void> saveTask = new Task<>() {
@@ -109,11 +105,7 @@ public class Controller {
 		});
 
 		root.selectFileBtn.setOnAction(e -> {
-			FileChooser fileChooser = new FileChooser();
-			fileChooser.setTitle("Select CSV File");
-			fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv", "*.CSV"));
-
+			FileChooser fileChooser = createFileChooser("Select CSV File", "", new FileChooser.ExtensionFilter("CSV File", "*.csv", "*.CSV"));
 			Optional.ofNullable(fileChooser.showOpenDialog(stage))
 				.ifPresent(file -> root.filePathInput.setText(file.getPath()));
 		});
@@ -166,11 +158,7 @@ public class Controller {
 				int width = Integer.parseInt(widthInput.getText());
 				int height = Integer.parseInt(heightInput.getText());
 
-				FileChooser fileChooser = new FileChooser();
-				fileChooser.setTitle("Save Chart As Image");
-				fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-				fileChooser.setInitialFileName("chart.png");
-
+				FileChooser fileChooser = createFileChooser("Save Chart As Image", "chart.png");
 				Optional.ofNullable(fileChooser.showSaveDialog(stage))
 					.ifPresent(file -> {
 						SaveChartTask saveChartTask = new SaveChartTask(width, height, file, tupleProperty.get(), data);
@@ -183,6 +171,16 @@ public class Controller {
 					});
 			}
 		});
+	}
+
+	private FileChooser createFileChooser(String title, String fileName, FileChooser.ExtensionFilter... filters) {
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle(title);
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		fileChooser.setInitialFileName(fileName);
+		fileChooser.getExtensionFilters().addAll(filters);
+
+		return fileChooser;
 	}
 
 	private void setRefreshBtnBehavior() {
