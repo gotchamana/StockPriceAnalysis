@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.util;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
@@ -31,6 +31,9 @@ import javafx.stage.Stage;
 import javax.imageio.ImageIO;
 
 import org.jooq.lambda.Unchecked;
+
+import stockanalysis.model.StockPrice;
+import stockanalysis.model.Tuple;
 
 public class ChartSaver extends Application {
 

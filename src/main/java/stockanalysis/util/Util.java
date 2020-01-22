@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.util;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -13,6 +13,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jooq.lambda.Unchecked;
+
+import stockanalysis.model.StockPrice;
+import stockanalysis.model.Tuple;
 
 public class Util {
 

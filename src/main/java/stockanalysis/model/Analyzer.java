@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.model;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
+import stockanalysis.util.Util;
 
 @NoArgsConstructor
 @AllArgsConstructor

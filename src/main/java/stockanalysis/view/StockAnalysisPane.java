@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.view;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -42,34 +42,37 @@ import com.jfoenix.validation.DoubleValidator;
 import com.jfoenix.validation.IntegerValidator;
 import com.jfoenix.validation.RequiredFieldValidator;
 
-class StockAnalysisPane extends JFXTabPane {
+import stockanalysis.model.Tuple;
+import stockanalysis.util.FileExistValidator;
+import stockanalysis.util.Util;
+
+public class StockAnalysisPane extends JFXTabPane {
 
 	private FontIcon refreshIcon, tableIcon, chartIcon;
 
-	// Package private for convenient access
-	JFXButton selectFileBtn;
-	JFXButton saveAnalysisBtn;
-	JFXButton analyzeBtn;
-	JFXButton refreshBtn;
-	JFXButton saveChartBtn;
+	public JFXButton selectFileBtn;
+	public JFXButton saveAnalysisBtn;
+	public JFXButton analyzeBtn;
+	public JFXButton refreshBtn;
+	public JFXButton saveChartBtn;
 
-	JFXTextField peakDurationInput;
-	JFXTextField peakDifferenceInput;
-	JFXTextField crashRateInput;
-	JFXTextField filePathInput;
-	JFXTextField widthInput;
-	JFXTextField heightInput;
+	public JFXTextField peakDurationInput;
+	public JFXTextField peakDifferenceInput;
+	public JFXTextField crashRateInput;
+	public JFXTextField filePathInput;
+	public JFXTextField widthInput;
+	public JFXTextField heightInput;
 
-	JFXProgressBar progressBar;
-	JFXProgressBar chartProgressBar;
+	public JFXProgressBar progressBar;
+	public JFXProgressBar chartProgressBar;
 
-	JFXTreeTableView<Tuple> table;
-	JFXComboBox<Integer> comboBox;
-	LineChart<String, Number> chart;
-	Pagination pagination;
-	Label totalLbl;
+	public JFXTreeTableView<Tuple> table;
+	public JFXComboBox<Integer> comboBox;
+	public LineChart<String, Number> chart;
+	public Pagination pagination;
+	public Label totalLbl;
 
-	StockAnalysisPane() {
+	public StockAnalysisPane() {
 		initControls();
 
 		Tab tableTab = createTableTab();

@@ -5,6 +5,9 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+import stockanalysis.control.Controller;
+import stockanalysis.view.StockAnalysisPane;
+
 public class Main extends Application {
 
     @Override

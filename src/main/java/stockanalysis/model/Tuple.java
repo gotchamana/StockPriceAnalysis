@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.model;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,6 +14,7 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import stockanalysis.util.Util;
 
 @Data
 @EqualsAndHashCode(callSuper = false)

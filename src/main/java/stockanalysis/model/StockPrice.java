@@ -1,12 +1,12 @@
-package stockanalysis;
+package stockanalysis.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
 
 import lombok.Value;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
 
 @Value
 public class StockPrice implements Comparable<StockPrice>, Serializable {

@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.control;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
@@ -51,6 +51,13 @@ import org.jooq.lambda.Unchecked;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
+
+import stockanalysis.model.Analyzer;
+import stockanalysis.model.StockPrice;
+import stockanalysis.model.Tuple;
+import stockanalysis.util.ChartSaver;
+import stockanalysis.util.Util;
+import stockanalysis.view.StockAnalysisPane;
 
 public class Controller {
 	
