@@ -1,26 +1,16 @@
 package stockanalysis.control;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.lang.InterruptedException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
@@ -28,23 +18,11 @@ import javafx.animation.RotateTransition;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Pagination;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
-import javafx.scene.image.WritableImage;
-import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-import javax.imageio.ImageIO;
 
 import org.jooq.lambda.Unchecked;
 
@@ -58,7 +36,6 @@ import stockanalysis.model.Tuple;
 import stockanalysis.util.ChartSaver;
 import stockanalysis.util.Util;
 import stockanalysis.view.StockAnalysisPane;
-import javafx.scene.Group;
 
 public class Controller {
 	
@@ -169,6 +146,7 @@ public class Controller {
 				Optional.ofNullable(fileChooser.showSaveDialog(stage))
 					.ifPresent(file -> {
 						SaveChartTask saveChartTask = new SaveChartTask(width, height, file, tupleProperty.get(), data);
+						saveChartTask.exceptionProperty().addListener((obs, oldValue, newValue) -> newValue.printStackTrace());
 						saveChartTask.setOnRunning(event -> root.chartProgressBar.setProgress(-1));
 						saveChartTask.setOnSucceeded(event -> root.chartProgressBar.setProgress(0));
 
@@ -268,26 +246,21 @@ public class Controller {
 
 		@Override
 		protected Void call() throws Exception {
+			// Use shared memory to send the chart data
+			FileChannel channel = FileChannel.open(Util.TEMP_FILE,
+				StandardOpenOption.READ,
+				StandardOpenOption.WRITE,
+				StandardOpenOption.CREATE,
+				StandardOpenOption.TRUNCATE_EXISTING);
+			MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, Integer.MAX_VALUE);
+			sendChartData(buffer);
+
 			// Launch another javafx application to save chart
 			// So that the process of rendering chart can't block the main UI thread
 			Process process = createProcessBuilder().start();
-
-			// Use Internet to send the chart data
-			ServerSocket serverSocket = createServerSocket();
-			Socket socket = serverSocket.accept();
-			sendChartData(socket.getOutputStream());
-
 			process.waitFor();
 
 			return null;
-		}
-
-		private ServerSocket createServerSocket() throws Exception {
-			int port = 9487;
-			int backlog = 1;
-			InetAddress localhost = InetAddress.getLocalHost();
-
-			return new ServerSocket(port, backlog, localhost);
 		}
 
 		private ProcessBuilder createProcessBuilder() {
@@ -323,16 +296,23 @@ public class Controller {
 				.contains("windows");
 		}
 
-		private void sendChartData(OutputStream sout) throws IOException {
-			ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(sout));
+		private void sendChartData(MappedByteBuffer buffer) throws IOException {
+			buffer.putInt(width)
+				.putInt(height);
 
-			try(out) {
-				out.writeInt(width);
-				out.writeInt(height);
-				out.writeObject(path);
-				out.writeObject(tuples);
-				out.writeObject(data);
-			}
+			byte[] pathByteArray = Util.objectToByteArray(path);
+			buffer.putInt(pathByteArray.length)
+				.put(pathByteArray);
+
+			byte[] tuplesByteArray = Util.objectToByteArray(tuples);
+			buffer.putInt(tuplesByteArray.length)
+				.put(tuplesByteArray);
+
+			byte[] dataByteArray = Util.objectToByteArray(data);
+			buffer.putInt(dataByteArray.length)
+				.put(dataByteArray);
+
+			buffer.force();
 		}
 	}
 }

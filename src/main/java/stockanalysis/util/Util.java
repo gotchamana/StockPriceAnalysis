@@ -1,9 +1,17 @@
 package stockanalysis.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +39,7 @@ import stockanalysis.model.Tuple;
 public class Util {
 
 	public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("YYYY/MM/dd");
+	public static final Path TEMP_FILE = Paths.get(System.getProperty("java.io.tmpdir")).resolve("StockAnalysis.tmp");
 
 	private Util() {
 	}
@@ -173,5 +182,20 @@ public class Util {
 			"Date", sp.getDate().format(DATE_FORMATTER),
 			"Price", sp.getPrice()));
 		Tooltip.install(symbol, tooltip);
+	}
+
+	public static <T> byte[] objectToByteArray(T obj) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(baos));
+		out.writeObject(obj);
+		out.flush();
+
+		return baos.toByteArray();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T byteArrayToObject(byte[] array, Class<T> clazz) throws IOException, ClassNotFoundException {
+		ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new ByteArrayInputStream(array)));
+		return (T) in.readObject();
 	}
 }
