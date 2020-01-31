@@ -22,11 +22,14 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import stockanalysis.util.Util;
+import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
 public class Analyzer {
 	
+	private static final int TOTAL_DAYS_OF_YEAR = 252;
+
 	@Setter
 	private double crashRate;
 
@@ -42,6 +45,7 @@ public class Analyzer {
 
 	public List<Tuple> getAnalysisResult() {
 		List<Tuple> tuples = firstProcess(90, data);
+		tuples = filterProcess(tuples, data);
 		tuples = secondProcess(tuples, data);
 
 		return tuples;
@@ -55,7 +59,7 @@ public class Analyzer {
 			int from = Math.max(spIndex - range, 0);
 			int to = Math.min(spIndex + (range + 1), data.size());
 
-			StockPrice peak = getPeakInRange(from, to, data);
+			StockPrice peak = getPeakInRange(from, to, data, false);
 			getCrashIdentificationOfPeak(peak, data).ifPresent(crash -> {
 				rlt.add(new Tuple(peak, null, crash));
 			});
@@ -64,9 +68,14 @@ public class Analyzer {
 		return rlt;
 	}
 
-	private StockPrice getPeakInRange(int from, int to, List<StockPrice> data) {
-		return data.subList(from, to)
-			.stream()
+	private StockPrice getPeakInRange(int from, int to, List<StockPrice> data, boolean reverse) {
+		List<StockPrice> subList = new ArrayList<>(data.subList(from, to));
+
+		if (reverse) {
+			Collections.reverse(subList);
+		}
+
+		return subList.stream()
 			.max(Comparator.comparingDouble(StockPrice::getPrice))
 			.get();
 	}
@@ -74,8 +83,51 @@ public class Analyzer {
 	private Optional<StockPrice> getCrashIdentificationOfPeak(StockPrice peak, List<StockPrice> data) {
 		return data.stream()
 			.skip(data.indexOf(peak) + 1)
+			.limit(TOTAL_DAYS_OF_YEAR)
 			.dropWhile(sp -> sp.getPrice() > peak.getPrice() * (1 - crashRate))
 			.findFirst();
+	}
+
+	private List<Tuple> filterProcess(List<Tuple> tuples, List<StockPrice> data) {
+		List<Tuple> rlt = filterSameCrashTuple(tuples);
+		rlt = filterSamePeakTuple(tuples, data);
+
+		return rlt;
+	}
+
+	private List<Tuple> filterSameCrashTuple(List<Tuple> tuples) {
+		Map<LocalDate, List<Tuple>> tuplesByCrashDate = tuples.stream()
+			.collect(Collectors.groupingBy(Tuple::getCrashDate));
+
+		List<Tuple> rlt = tuplesByCrashDate.entrySet()
+			.stream()
+			.map(e -> e.getValue()
+				.stream()
+				.max(Comparator.comparing(Tuple::getPeakDate))
+				.get())
+			.collect(Collectors.toList());
+
+		return rlt;
+	}
+
+	private List<Tuple> filterSamePeakTuple(List<Tuple> tuples, List<StockPrice> data) {
+		Map<StockPrice, List<Tuple>> tuplesByPeak = tuples.stream()
+			.collect(Collectors.groupingBy(tuple -> {
+				int crashIndex = data.indexOf(tuple.getCrash());
+				int from = Math.max(0, crashIndex - TOTAL_DAYS_OF_YEAR);
+				return getPeakInRange(from, crashIndex, data, true);
+			}));
+
+		List<Tuple> rlt = tuplesByPeak.entrySet()
+			.stream()
+			.map(e -> e.getValue()
+				.stream()
+				.max(Comparator.comparing(Tuple::getCrashDate))
+				.get())
+			.sorted(Comparator.comparing(Tuple::getPeakDate))
+			.collect(Collectors.toList());
+
+		return rlt;
 	}
 
 	private List<Tuple> secondProcess(List<Tuple> tuples, List<StockPrice> data) {
