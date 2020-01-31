@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.model;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,12 +33,12 @@ public class AnalyzerTest {
 
     @ParameterizedTest 
 	@MethodSource("dataPeakProvider")
-	public void Should_GetThePeakInTheFirstOccurenceWithTheRange(int from, int to, List<StockPrice> data, StockPrice expected) {
+	public void Should_GetThePeakWithTheRange(int from, int to, List<StockPrice> data, boolean reverse, StockPrice expected) {
 		StockPrice peak = method("getPeakInRange")
 			.withReturnType(new TypeRef<StockPrice>() {})
-			.withParameterTypes(int.class, int.class, List.class)
+			.withParameterTypes(int.class, int.class, List.class, boolean.class)
 			.in(analyzer)
-			.invoke(from, to, data);
+			.invoke(from, to, data, reverse);
 
 		assertEquals(expected, peak);
 	}
@@ -54,8 +55,9 @@ public class AnalyzerTest {
 		List<StockPrice> data2 = Arrays.asList(sp1, sp2, sp3, sp5, sp6);
 
 		return Stream.of(
-				Arguments.of(1, 4, data1, sp3),
-				Arguments.of(1, 4, data2, sp3)
+				Arguments.of(1, 4, data1, false, sp3),
+				Arguments.of(1, 4, data2, false, sp3),
+				Arguments.of(1, 4, data2, true, sp5)
 			);
 	}
 
@@ -132,6 +134,85 @@ public class AnalyzerTest {
 			.invoke(1, data);
 
 		assertEquals(expected, firstProcessResult);
+	}
+
+	@Test
+	public void Should_FilterTheTuplesWithTheRepeatedCrashIdentificationPoint() {
+		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
+		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
+		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 200);
+		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
+		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
+		
+		Tuple t1 = new Tuple(sp1, null, sp4);
+		Tuple t2 = new Tuple(sp2, null, sp4);
+		Tuple t3 = new Tuple(sp3, null, sp4);
+		Tuple t4 = new Tuple(sp4, null, sp5);
+
+		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4);
+
+		List<Tuple> actual = method("filterSameCrashTuple")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(List.class)
+			.in(analyzer)
+			.invoke(tuples);
+
+		assertThat(actual).containsExactlyInAnyOrder(t3, t4);
+	}
+
+	@Test
+	public void Should_FilterTheTuplesWithTheRepeatedPeak() {
+		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
+		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
+		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 500);
+		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
+		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
+		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 700);
+		
+		Tuple t1 = new Tuple(sp1, null, sp2);
+		Tuple t2 = new Tuple(sp2, null, sp3);
+		Tuple t3 = new Tuple(sp3, null, sp4);
+		Tuple t4 = new Tuple(sp4, null, sp5);
+
+		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6);
+		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4);
+		List<Tuple> expected = Arrays.asList(t1, t4);
+
+		List<Tuple> actual = method("filterSamePeakTuple")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(List.class, List.class, int.class)
+			.in(analyzer)
+			.invoke(tuples, data, 3);
+
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void Should_GetCorrectResultOfFilterProcess() {
+		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
+		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
+		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 500);
+		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
+		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
+		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 700);
+		
+		Tuple t1 = new Tuple(sp1, null, sp2);
+		Tuple t2 = new Tuple(sp2, null, sp4);
+		Tuple t3 = new Tuple(sp3, null, sp4);
+		Tuple t4 = new Tuple(sp4, null, sp6);
+		Tuple t5 = new Tuple(sp5, null, sp6);
+
+		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6);
+		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4, t5);
+		List<Tuple> expected = Arrays.asList(t1, t5);
+		
+		List<Tuple> actual = method("filterProcess")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(List.class, List.class, int.class)
+			.in(analyzer)
+			.invoke(tuples, data, 3);
+
+		assertEquals(expected, actual);
 	}
 
     @ParameterizedTest 

@@ -45,7 +45,7 @@ public class Analyzer {
 
 	public List<Tuple> getAnalysisResult() {
 		List<Tuple> tuples = firstProcess(90, data);
-		tuples = filterProcess(tuples, data);
+		tuples = filterProcess(tuples, data, TOTAL_DAYS_OF_YEAR);
 		tuples = secondProcess(tuples, data);
 
 		return tuples;
@@ -88,9 +88,9 @@ public class Analyzer {
 			.findFirst();
 	}
 
-	private List<Tuple> filterProcess(List<Tuple> tuples, List<StockPrice> data) {
+	private List<Tuple> filterProcess(List<Tuple> tuples, List<StockPrice> data, int range) {
 		List<Tuple> rlt = filterSameCrashTuple(tuples);
-		rlt = filterSamePeakTuple(tuples, data);
+		rlt = filterSamePeakTuple(rlt, data, range);
 
 		return rlt;
 	}
@@ -110,11 +110,11 @@ public class Analyzer {
 		return rlt;
 	}
 
-	private List<Tuple> filterSamePeakTuple(List<Tuple> tuples, List<StockPrice> data) {
+	private List<Tuple> filterSamePeakTuple(List<Tuple> tuples, List<StockPrice> data, int range) {
 		Map<StockPrice, List<Tuple>> tuplesByPeak = tuples.stream()
 			.collect(Collectors.groupingBy(tuple -> {
 				int crashIndex = data.indexOf(tuple.getCrash());
-				int from = Math.max(0, crashIndex - TOTAL_DAYS_OF_YEAR);
+				int from = Math.max(0, crashIndex - range);
 				return getPeakInRange(from, crashIndex, data, true);
 			}));
 
@@ -122,7 +122,7 @@ public class Analyzer {
 			.stream()
 			.map(e -> e.getValue()
 				.stream()
-				.max(Comparator.comparing(Tuple::getCrashDate))
+				.min(Comparator.comparing(Tuple::getCrashDate))
 				.get())
 			.sorted(Comparator.comparing(Tuple::getPeakDate))
 			.collect(Collectors.toList());

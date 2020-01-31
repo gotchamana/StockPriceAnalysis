@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.control;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +19,7 @@ import org.testfx.framework.junit5.Start;
 import static javafx.scene.input.KeyCode.*;
 import static org.testfx.assertions.api.Assertions.*;
 import static org.testfx.robot.Motion.*;
+import stockanalysis.view.StockAnalysisPane;
 
 @EnabledIfSystemProperty(named = "class.test", matches = "Controller|All")
 @ExtendWith(ApplicationExtension.class)
@@ -140,15 +141,15 @@ public class ControllerTest {
 		root.crashRateInput.setText("10");
 		root.filePathInput.setText("/home/shootingstar/NetBeansProjects/StockAnalysis/src/test/resources/stockPrice.csv");
 
-		assertThat(root.saveBtn).isDisabled();
+		assertThat(root.saveAnalysisBtn).isDisabled();
 		robot.clickOn(root.analyzeBtn, DEFAULT)
 			.sleep(10, TimeUnit.SECONDS);
-		assertThat(root.saveBtn).isEnabled();
+		assertThat(root.saveAnalysisBtn).isEnabled();
 
 		root.crashRateInput.setText("100");
 		robot.clickOn(root.analyzeBtn, DEFAULT)
 			.sleep(15, TimeUnit.SECONDS);
-		assertThat(root.saveBtn).isDisabled();
+		assertThat(root.saveAnalysisBtn).isDisabled();
 	}
 
 	// @Disabled

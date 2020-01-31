@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.util;
 
 import java.io.IOException;
 import java.lang.UnsupportedOperationException;
@@ -32,6 +32,8 @@ import com.google.common.jimfs.Jimfs;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 import static org.junit.jupiter.api.Assertions.*;
+import stockanalysis.model.StockPrice;
+import stockanalysis.model.Tuple;
 
 @EnabledIfSystemProperty(named = "class.test", matches = "Util|All")
 public class UtilTest {

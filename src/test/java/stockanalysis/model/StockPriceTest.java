@@ -1,4 +1,4 @@
-package stockanalysis;
+package stockanalysis.model;
 
 import java.time.LocalDate;
 import java.util.stream.Stream;
