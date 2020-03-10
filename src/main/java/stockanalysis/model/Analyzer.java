@@ -1,9 +1,5 @@
 package stockanalysis.model;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,9 +7,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +21,6 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import stockanalysis.util.Util;
-import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -44,79 +42,88 @@ public class Analyzer {
 	private List<StockPrice> data;
 
 	public List<Tuple> getAnalysisResult() {
-		List<Tuple> tuples = firstProcess(90, data);
-		tuples = filterProcess(tuples, data, TOTAL_DAYS_OF_YEAR);
-		tuples = secondProcess(tuples, data);
+		Set[] lpsAndlts = findLocalPeaksAndLocalTroughs(90, data);
+		List<Tuple> tuples = findCandidatePeakCrashPairs(data);
+		tuples = filterSameCandidatePeakTuple(tuples);
+		tuples = filterCandidatePeakCrashPairsWithNoLocalTrough(data, tuples, lpsAndlts);
+		tuples = findTroughs(data, tuples);
 
 		return tuples;
 	}
 
-	private List<Tuple> firstProcess(int range, List<StockPrice> data) {
-		List<Tuple> rlt = new ArrayList<>();
+	private Set[] findLocalPeaksAndLocalTroughs(int range, List<StockPrice> data) {
+		Set<StockPrice> localPeaks = new HashSet<>();
+		Set<StockPrice> localTroughs = new HashSet<>();
 
 		for (StockPrice sp : data) {
 			int spIndex = data.indexOf(sp);
 			int from = Math.max(spIndex - range, 0);
 			int to = Math.min(spIndex + (range + 1), data.size());
+			List<StockPrice> subData = data.subList(from, to);
 
-			StockPrice peak = getPeakInRange(from, to, data, false);
-			getCrashIdentificationOfPeak(peak, data).ifPresent(crash -> {
-				rlt.add(new Tuple(peak, null, crash));
-			});
+			if (isPeak(sp, subData)) {
+				localPeaks.add(sp);
+			}
+
+			if (isTrough(sp, subData)) {
+				localTroughs.add(sp);
+			}
 		}
 
-		return rlt;
+		return new Set[] { localPeaks, localTroughs };
 	}
 
-	private StockPrice getPeakInRange(int from, int to, List<StockPrice> data, boolean reverse) {
-		List<StockPrice> subList = new ArrayList<>(data.subList(from, to));
-
-		if (reverse) {
-			Collections.reverse(subList);
+	private boolean isPeak(StockPrice target, List<StockPrice> data) {
+		for (StockPrice sp : data) {
+			if (sp.getPrice() > target.getPrice()) {
+				return false;
+			}
 		}
 
-		return subList.stream()
-			.max(Comparator.comparingDouble(StockPrice::getPrice))
-			.get();
+		return true;
 	}
 
-	private Optional<StockPrice> getCrashIdentificationOfPeak(StockPrice peak, List<StockPrice> data) {
-		return data.stream()
-			.skip(data.indexOf(peak) + 1)
-			.limit(TOTAL_DAYS_OF_YEAR)
-			.dropWhile(sp -> sp.getPrice() > peak.getPrice() * (1 - crashRate))
-			.findFirst();
+	private boolean isTrough(StockPrice target, List<StockPrice> data) {
+		for (StockPrice sp : data) {
+			if (sp.getPrice() < target.getPrice()) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
-	private List<Tuple> filterProcess(List<Tuple> tuples, List<StockPrice> data, int range) {
-		List<Tuple> rlt = filterSameCrashTuple(tuples);
-		rlt = filterSamePeakTuple(rlt, data, range);
+	private List<Tuple> findCandidatePeakCrashPairs(List<StockPrice> data) {
+		List<Tuple> tuples = new LinkedList<>();
 
-		return rlt;
+		for (int i = 1; i < data.size(); i++) {
+			int candidatePeakIndex = -1, lastSpLowerThanCurSpIndex = -1;
+			StockPrice candidateCrash = data.get(i), candidatePeak = null;
+
+			for (int j = Math.max(i - TOTAL_DAYS_OF_YEAR, 0); j < i; j++) {
+				StockPrice curSp = data.get(j);
+
+				if (candidatePeak == null ||
+					candidatePeak.getPrice() <= curSp.getPrice()) {
+					candidatePeakIndex = j;
+					candidatePeak = curSp;
+				}
+
+				lastSpLowerThanCurSpIndex = curSp.getPrice() < candidateCrash.getPrice() ? j : lastSpLowerThanCurSpIndex;
+			}
+
+			if (candidatePeakIndex > lastSpLowerThanCurSpIndex &&
+				candidatePeak.getPrice() * (1 - crashRate) >= candidateCrash.getPrice()) {
+				tuples.add(new Tuple(candidatePeak, null, candidateCrash));
+			}
+		}
+		
+		return tuples;
 	}
 
-	private List<Tuple> filterSameCrashTuple(List<Tuple> tuples) {
-		Map<LocalDate, List<Tuple>> tuplesByCrashDate = tuples.stream()
-			.collect(Collectors.groupingBy(Tuple::getCrashDate));
-
-		List<Tuple> rlt = tuplesByCrashDate.entrySet()
-			.stream()
-			.map(e -> e.getValue()
-				.stream()
-				.max(Comparator.comparing(Tuple::getPeakDate))
-				.get())
-			.collect(Collectors.toList());
-
-		return rlt;
-	}
-
-	private List<Tuple> filterSamePeakTuple(List<Tuple> tuples, List<StockPrice> data, int range) {
+	private List<Tuple> filterSameCandidatePeakTuple(List<Tuple> tuples) {
 		Map<StockPrice, List<Tuple>> tuplesByPeak = tuples.stream()
-			.collect(Collectors.groupingBy(tuple -> {
-				int crashIndex = data.indexOf(tuple.getCrash());
-				int from = Math.max(0, crashIndex - range);
-				return getPeakInRange(from, crashIndex, data, true);
-			}));
+			.collect(Collectors.groupingBy(Tuple::getPeak));
 
 		List<Tuple> rlt = tuplesByPeak.entrySet()
 			.stream()
@@ -124,63 +131,55 @@ public class Analyzer {
 				.stream()
 				.min(Comparator.comparing(Tuple::getCrashDate))
 				.get())
-			.sorted(Comparator.comparing(Tuple::getPeakDate))
 			.collect(Collectors.toList());
 
 		return rlt;
 	}
 
-	private List<Tuple> secondProcess(List<Tuple> tuples, List<StockPrice> data) {
-		if (tuples.isEmpty()) {
-			return tuples;
-		}
-
-		List<Tuple> copyTuples = tuples.stream()
-			.map(tuple -> (Tuple) tuple.clone())
+	private List<Tuple> filterCandidatePeakCrashPairsWithNoLocalTrough(List<StockPrice> data, List<Tuple> tuples, Set[] lpsAndlts) {
+		List<Tuple> rlt = tuples.stream()
+			.filter(t -> hasLocalTrough(t.getPeak(), data, lpsAndlts))
 			.collect(Collectors.toList());
-
-		Deque<Integer> adoptTupleIndices = new LinkedList<>();
-		adoptTupleIndices.add(0);
-
-		copyTuples.stream()
-			.skip(1)
-			.forEach(curTuple -> {
-				Tuple preTuple = copyTuples.get(adoptTupleIndices.getLast());
-
-				StockPrice prePeak = preTuple.getPeak();
-				StockPrice curPeak = curTuple.getPeak();
-
-				LocalDateTime prePeakDateTime = prePeak.getDate().atStartOfDay();
-				LocalDateTime curPeakDateTime = curPeak.getDate().atStartOfDay();
-
-				double prePeakPrice = prePeak.getPrice();
-				double curPeakPrice = curPeak.getPrice();
-
-				int duration = Util.calcTwoDateDurationInDays(prePeakDateTime, curPeakDateTime);
-				double priceDiff = Math.abs(prePeakPrice - curPeakPrice) / prePeakPrice;
-
-				if (duration >= peakDuration && priceDiff >= peakDifference) {
-					int prePeakIndex = data.indexOf(prePeak);
-					int curPeakIndex = data.indexOf(curPeak);
-					StockPrice trough = getTroughInRange(prePeakIndex, curPeakIndex + 1, data);
-
-					if (trough.getPrice() < Math.min(prePeakPrice, curPeakPrice)) {
-						preTuple.setTrough(trough);
-						adoptTupleIndices.add(copyTuples.indexOf(curTuple));
-					}
-				}
-			});
-
-		return adoptTupleIndices.stream()
-			.map(index -> copyTuples.get(index))
-			.takeWhile(tuple -> tuple.getTrough() != null)
-			.collect(Collectors.toList());
+		
+		return rlt;
 	}
 
-	private StockPrice getTroughInRange(int from, int to, List<StockPrice> data) {
-		List<StockPrice> copySubList = new ArrayList<>(data.subList(from, to));
-		Collections.reverse(copySubList);
+	@SuppressWarnings("unchecked")
+	private boolean hasLocalTrough(StockPrice peak, List<StockPrice> data, Set[] lpsAndlts) {
+		Set<StockPrice> localPeaks = lpsAndlts[0];
+		Set<StockPrice> localTroughs = lpsAndlts[1];
+		int spIndex = data.indexOf(peak);
 
-		return Collections.min(copySubList, Comparator.comparingDouble(StockPrice::getPrice));
+		for (int i = spIndex - 1; i >= 0; i--) {
+			StockPrice sp = data.get(i);
+			if (localTroughs.contains(sp)) {
+				return true;
+			}
+
+			if (localPeaks.contains(sp)) {
+				break;
+			}
+		}
+
+		return false;
+	}
+
+	private List<Tuple> findTroughs(List<StockPrice> data, List<Tuple> tuples) {
+		for (int i = 0; i < tuples.size() - 1; i++) {
+			int peakIndex1 = data.indexOf(tuples.get(i).getPeak());
+			int peakIndex2 = data.indexOf(tuples.get(i + 1).getPeak());
+			StockPrice trough = findTroughInRange(peakIndex1 + 1, peakIndex2, data);
+
+			tuples.get(i).setTrough(trough);
+		}
+
+		return tuples;
+	}
+
+	private StockPrice findTroughInRange(int from, int to, List<StockPrice> data) {
+		return data.subList(from, to)
+			.stream()
+			.min(Comparator.comparingDouble(StockPrice::getPrice))
+			.get();
 	}
 }
