@@ -95,15 +95,10 @@ public class Controller {
 		});
 
 		root.analyzeBtn.setOnAction(e -> {
-			JFXTextField peakDurationInput = root.peakDurationInput;
-			JFXTextField peakDifferenceInput = root.peakDifferenceInput;
 			JFXTextField crashRateInput = root.crashRateInput;
 			JFXTextField filePathInput = root.filePathInput;
 
-			if (peakDurationInput.validate() & peakDifferenceInput.validate() &
-					crashRateInput.validate() & filePathInput.validate()) {
-				int peakDuration = Integer.parseInt(peakDurationInput.getText());
-				double peakDifference = Double.parseDouble(peakDifferenceInput.getText()) / 100;
+			if (crashRateInput.validate() & filePathInput.validate()) {
 				double crashRate = Double.parseDouble(crashRateInput.getText()) / 100;
 				String path = filePathInput.getText();
 				Function<String, Path> convertToRealPath = Unchecked.function(p -> Paths.get(p).toRealPath());

@@ -56,8 +56,6 @@ public class StockAnalysisPane extends JFXTabPane {
 	public JFXButton refreshBtn;
 	public JFXButton saveChartBtn;
 
-	public JFXTextField peakDurationInput;
-	public JFXTextField peakDifferenceInput;
 	public JFXTextField crashRateInput;
 	public JFXTextField filePathInput;
 	public JFXTextField widthInput;
@@ -118,14 +116,6 @@ public class StockAnalysisPane extends JFXTabPane {
 		DoubleValidator doubleValidator = new DoubleValidator();
 		RequiredFieldValidator requiredFieldValidator = new RequiredFieldValidator("Input required");
 		FileExistValidator fileExistValidator = new FileExistValidator();
-
-		peakDurationInput = new JFXTextField();
-		peakDurationInput.setPromptText("Duration between peaks (in days)");
-		peakDurationInput.getValidators().addAll(requiredFieldValidator, integerValidator);
-
-		peakDifferenceInput = new JFXTextField();
-		peakDifferenceInput.setPromptText("Stock price between peaks (%)");
-		peakDifferenceInput.getValidators().addAll(requiredFieldValidator, doubleValidator);
 
 		crashRateInput = new JFXTextField();
 		crashRateInput.setPromptText("Crash identification (%)");
@@ -231,7 +221,7 @@ public class StockAnalysisPane extends JFXTabPane {
 
 	private Tab createTableTab() {
 		GridPane gridPane = createGridPane();
-		gridPane.addRow(0, peakDurationInput, crashRateInput, peakDifferenceInput);
+		gridPane.addRow(0, crashRateInput);
 
 		HBox hBox = new HBox();
 		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
@@ -261,7 +251,7 @@ public class StockAnalysisPane extends JFXTabPane {
 			HPos.CENTER, true);
 
 		GridPane gridPane = new GridPane();
-		gridPane.getColumnConstraints().addAll(col, col, col);
+		gridPane.getColumnConstraints().add(col);
 		gridPane.getStyleClass().add("grid-pane");
 
 		return gridPane;

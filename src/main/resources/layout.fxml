@@ -57,16 +57,12 @@
                   <GridPane hgap="10.0" styleClass="grid-pane" vgap="20.0" BorderPane.alignment="CENTER">
                     <columnConstraints>
                       <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
-                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
-                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
                     </columnConstraints>
                     <rowConstraints>
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
                         <JFXTextField styleClass="jfx-text-field" />
-                        <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="1" />
-                        <JFXTextField styleClass="jfx-text-field" GridPane.columnIndex="2" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="20.0" />
