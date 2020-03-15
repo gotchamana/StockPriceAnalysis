@@ -43,7 +43,7 @@ public class Analyzer {
 
 	public List<Tuple> getAnalysisResult() {
 		Set[] lpsAndlts = findLocalPeaksAndLocalTroughs(90, data);
-		List<Tuple> tuples = findCandidatePeakCrashPairs(data);
+		List<Tuple> tuples = findCandidatePeakCrashPairs(TOTAL_DAYS_OF_YEAR, data);
 		tuples = filterSameCandidatePeakTuple(tuples);
 		tuples = filterCandidatePeakCrashPairsWithNoLocalTrough(data, tuples, lpsAndlts);
 		tuples = findTroughs(data, tuples);
@@ -93,14 +93,14 @@ public class Analyzer {
 		return true;
 	}
 
-	private List<Tuple> findCandidatePeakCrashPairs(List<StockPrice> data) {
+	private List<Tuple> findCandidatePeakCrashPairs(int range, List<StockPrice> data) {
 		List<Tuple> tuples = new LinkedList<>();
 
 		for (int i = 1; i < data.size(); i++) {
 			int candidatePeakIndex = -1, lastSpLowerThanCurSpIndex = -1;
 			StockPrice candidateCrash = data.get(i), candidatePeak = null;
 
-			for (int j = Math.max(i - TOTAL_DAYS_OF_YEAR, 0); j < i; j++) {
+			for (int j = Math.max(i - range, 0); j < i; j++) {
 				StockPrice curSp = data.get(j);
 
 				if (candidatePeak == null ||
@@ -165,6 +165,8 @@ public class Analyzer {
 	}
 
 	private List<Tuple> findTroughs(List<StockPrice> data, List<Tuple> tuples) {
+		tuples.sort(Comparator.comparing(t -> t.getPeak().getDate()));
+
 		for (int i = 0; i < tuples.size() - 1; i++) {
 			int peakIndex1 = data.indexOf(tuples.get(i).getPeak());
 			int peakIndex2 = data.indexOf(tuples.get(i + 1).getPeak());

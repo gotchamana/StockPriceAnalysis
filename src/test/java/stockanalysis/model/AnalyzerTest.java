@@ -1,12 +1,9 @@
 package stockanalysis.model;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fest.reflect.reference.TypeRef;
@@ -31,291 +28,242 @@ public class AnalyzerTest {
 		analyzer = new Analyzer();
 	}
 
-    @ParameterizedTest 
-	@MethodSource("dataPeakProvider")
-	public void Should_GetThePeakWithTheRange(int from, int to, List<StockPrice> data, boolean reverse, StockPrice expected) {
-		StockPrice peak = method("getPeakInRange")
-			.withReturnType(new TypeRef<StockPrice>() {})
-			.withParameterTypes(int.class, int.class, List.class, boolean.class)
-			.in(analyzer)
-			.invoke(from, to, data, reverse);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_BePeak_When_AllStockPriceAreLowerThanTarget(List<StockPrice> data) {
+		StockPrice target = new StockPrice(LocalDate.of(1980, 1, 8), 700);
 
-		assertEquals(expected, peak);
-	}
-
-	private static Stream<Arguments> dataPeakProvider() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 400);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 300);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
-
-		List<StockPrice> data1 = Arrays.asList(sp1, sp2, sp3, sp4, sp6);
-		List<StockPrice> data2 = Arrays.asList(sp1, sp2, sp3, sp5, sp6);
-
-		return Stream.of(
-				Arguments.of(1, 4, data1, false, sp3),
-				Arguments.of(1, 4, data2, false, sp3),
-				Arguments.of(1, 4, data2, true, sp5)
-			);
-	}
-
-    @Test 
-	public void Should_ReturnEmptyOptional_When_CannotFindACrashIdentification() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 700);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 900);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 800);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 1000);
-
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5);
-
-		analyzer.setCrashRate(0.1);
-
-		Optional<StockPrice> crash = method("getCrashIdentificationOfPeak")
-			.withReturnType(new TypeRef<Optional<StockPrice>>() {})
+		boolean actual = method("isPeak")
+			.withReturnType(new TypeRef<Boolean>() {})
 			.withParameterTypes(StockPrice.class, List.class)
 			.in(analyzer)
-			.invoke(sp2, data);
-
-		assertEquals(Optional.empty(), crash);
+			.invoke(target, data);
+		
+		assertTrue(actual);
 	}
 
-    @Test 
-	public void Should_GetTheFirstCrashIdentificationAccrodingToCrashRate() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 700);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 900);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 600);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 500);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_BeNotPeak_When_SomeStockPriceAreHigherThanTarget(List<StockPrice> data) {
+		StockPrice target = new StockPrice(LocalDate.of(1980, 1, 6), 400);
 
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5);
-
-		analyzer.setCrashRate(0.1);
-
-		Optional<StockPrice> crash = method("getCrashIdentificationOfPeak")
-			.withReturnType(new TypeRef<Optional<StockPrice>>() {})
+		boolean actual = method("isPeak")
+			.withReturnType(new TypeRef<Boolean>() {})
 			.withParameterTypes(StockPrice.class, List.class)
 			.in(analyzer)
-			.invoke(sp2, data);
-
-		assertEquals(sp4, crash.get());
+			.invoke(target, data);
+		
+		assertFalse(actual);
 	}
 
-	@Test
-	public void Should_GetTheCorrectResultOfFirstProcess() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 500);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 700);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 600);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 800);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 400);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 900);
-		StockPrice sp7 = new StockPrice(LocalDate.of(1980, 1, 10), 100);
-		StockPrice sp8 = new StockPrice(LocalDate.of(1980, 1, 11), 300);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_BeTrough_When_AllStockPriceAreHigherThanTarget(List<StockPrice> data) {
+		StockPrice target = new StockPrice(LocalDate.of(1980, 1, 5), 200);
 
-		Tuple t1 = new Tuple(sp2, null, sp3);
-		Tuple t2 = new Tuple(sp2, null, sp3);
-		Tuple t3 = new Tuple(sp4, null, sp5);
-		Tuple t4 = new Tuple(sp4, null, sp5);
-		Tuple t5 = new Tuple(sp6, null, sp7);
-		Tuple t6 = new Tuple(sp6, null, sp7);
-		Tuple t7 = new Tuple(sp6, null, sp7);
+		boolean actual = method("isTrough")
+			.withReturnType(new TypeRef<Boolean>() {})
+			.withParameterTypes(StockPrice.class, List.class)
+			.in(analyzer)
+			.invoke(target, data);
+		
+		assertTrue(actual);
+	}
 
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8);
-		List<Tuple> expected = Arrays.asList(t1, t2, t3, t4, t5, t6, t7);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_BeNotTrough_When_SomeStockPriceAreLowerThanTarget(List<StockPrice> data) {
+		StockPrice target = new StockPrice(LocalDate.of(1980, 1, 4), 600);
 
-		analyzer.setCrashRate(0.1);
+		boolean actual = method("isTrough")
+			.withReturnType(new TypeRef<Boolean>() {})
+			.withParameterTypes(StockPrice.class, List.class)
+			.in(analyzer)
+			.invoke(target, data);
+		
+		assertFalse(actual);
+	}
 
-		List<Tuple> firstProcessResult = method("firstProcess")
-			.withReturnType(new TypeRef<List<Tuple>>() {})
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	@SuppressWarnings("unchecked")
+	public void Should_GetAllLocalPeaksAndLocalTroughs(List<StockPrice> data) {
+		Set<StockPrice> expectedLocalPeaks = Set.of(data.get(0), data.get(2), data.get(4));
+		Set<StockPrice> expectedLocalTroughs = Set.of(data.get(1), data.get(3));
+
+		Set[] actual = method("findLocalPeaksAndLocalTroughs")
+			.withReturnType(new TypeRef<Set[]>() {})
 			.withParameterTypes(int.class, List.class)
 			.in(analyzer)
 			.invoke(1, data);
+		
+		Set<StockPrice> actualLocalPeaks = actual[0];
+		Set<StockPrice> actualLocalTroughs = actual[1];
 
-		assertEquals(expected, firstProcessResult);
+		assertThat(actualLocalPeaks).hasSameElementsAs(expectedLocalPeaks);
+		assertThat(actualLocalTroughs).hasSameElementsAs(expectedLocalTroughs);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_GetCandidatePeakCrashPairs(List<StockPrice> data) {
+		analyzer.setCrashRate(0.1);
+
+		List<Tuple> expected = Arrays.asList(new Tuple(data.get(0), null, data.get(1)));
+		List<Tuple> actual = method("findCandidatePeakCrashPairs")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(int.class, List.class)
+			.in(analyzer)
+			.invoke(2, data);
+		
+		assertThat(actual).containsExactlyElementsOf(expected);
 	}
 
 	@Test
-	public void Should_FilterTheTuplesWithTheRepeatedCrashIdentificationPoint() {
+	public void Should_FilterTuplesHavingTheSameCandidatePeak() {
 		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
 		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 200);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
-		
-		Tuple t1 = new Tuple(sp1, null, sp4);
-		Tuple t2 = new Tuple(sp2, null, sp4);
+		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 400);
+		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 100);
+
+		Tuple t1 = new Tuple(sp1, null, sp2);
+		Tuple t2 = new Tuple(sp1, null, sp3);
 		Tuple t3 = new Tuple(sp3, null, sp4);
-		Tuple t4 = new Tuple(sp4, null, sp5);
 
-		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4);
+		List<Tuple> tuples = Arrays.asList(t1, t2, t3);
 
-		List<Tuple> actual = method("filterSameCrashTuple")
+		List<Tuple> expected = Arrays.asList(t1, t3);
+		List<Tuple> actual = method("filterSameCandidatePeakTuple")
 			.withReturnType(new TypeRef<List<Tuple>>() {})
 			.withParameterTypes(List.class)
 			.in(analyzer)
 			.invoke(tuples);
-
-		assertThat(actual).containsExactlyInAnyOrder(t3, t4);
+		
+		assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
 	}
 
-	@Test
-	public void Should_FilterTheTuplesWithTheRepeatedPeak() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 500);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 700);
-		
-		Tuple t1 = new Tuple(sp1, null, sp2);
-		Tuple t2 = new Tuple(sp2, null, sp3);
-		Tuple t3 = new Tuple(sp3, null, sp4);
-		Tuple t4 = new Tuple(sp4, null, sp5);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_HaveLocalTrough(List<StockPrice> data) {
+		StockPrice peak = data.get(4);
+		Set[] lpsAndlts = new Set[] { Set.of(data.get(0)), Set.of(data.get(1)) };
 
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6);
-		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4);
-		List<Tuple> expected = Arrays.asList(t1, t4);
-
-		List<Tuple> actual = method("filterSamePeakTuple")
-			.withReturnType(new TypeRef<List<Tuple>>() {})
-			.withParameterTypes(List.class, List.class, int.class)
+		boolean actual = method("hasLocalTrough")
+			.withReturnType(new TypeRef<Boolean>() {})
+			.withParameterTypes(StockPrice.class, List.class, Set[].class)
 			.in(analyzer)
-			.invoke(tuples, data, 3);
+			.invoke(peak, data, lpsAndlts);
 
-		assertEquals(expected, actual);
+		assertTrue(actual);
 	}
 
-	@Test
-	public void Should_GetCorrectResultOfFilterProcess() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 500);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 700);
-		
-		Tuple t1 = new Tuple(sp1, null, sp2);
-		Tuple t2 = new Tuple(sp2, null, sp4);
-		Tuple t3 = new Tuple(sp3, null, sp4);
-		Tuple t4 = new Tuple(sp4, null, sp6);
-		Tuple t5 = new Tuple(sp5, null, sp6);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_NotHaveLocalTrough_When_EncounterLocalPeak(List<StockPrice> data) {
+		StockPrice peak = data.get(4);
+		Set[] lpsAndlts = new Set[] { Set.of(data.get(2)), Set.of(data.get(1)) };
 
-		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6);
-		List<Tuple> tuples = Arrays.asList(t1, t2, t3, t4, t5);
-		List<Tuple> expected = Arrays.asList(t1, t5);
-		
-		List<Tuple> actual = method("filterProcess")
-			.withReturnType(new TypeRef<List<Tuple>>() {})
-			.withParameterTypes(List.class, List.class, int.class)
+		boolean actual = method("hasLocalTrough")
+			.withReturnType(new TypeRef<Boolean>() {})
+			.withParameterTypes(StockPrice.class, List.class, Set[].class)
 			.in(analyzer)
-			.invoke(tuples, data, 3);
+			.invoke(peak, data, lpsAndlts);
 
-		assertEquals(expected, actual);
+		assertFalse(actual);
 	}
 
-    @ParameterizedTest 
-	@MethodSource("dataTroughProvider")
-	public void Should_GetTheTroughInTheLastOccurenceWithTheRange(int from, int to, List<StockPrice> data, StockPrice expected) {
-		StockPrice trough = method("getTroughInRange")
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_NotHaveLocalTrough_When_NotEncounterAnyLocalTrough(List<StockPrice> data) {
+		StockPrice peak = data.get(1);
+		Set[] lpsAndlts = new Set[] { Set.of(data.get(4)), Set.of() };
+
+		boolean actual = method("hasLocalTrough")
+			.withReturnType(new TypeRef<Boolean>() {})
+			.withParameterTypes(StockPrice.class, List.class, Set[].class)
+			.in(analyzer)
+			.invoke(peak, data, lpsAndlts);
+
+		assertFalse(actual);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_FilterTuplesWithoutLocalTrough(List<StockPrice> data) {
+		Set[] lpsAndlts = new Set[] { Set.of(data.get(0), data.get(3)), Set.of(data.get(1)) };
+
+		Tuple t1 = new Tuple(data.get(0), null, data.get(1));
+		Tuple t2 = new Tuple(data.get(1), null, data.get(2));
+		Tuple t3 = new Tuple(data.get(2), null, data.get(3));
+
+		List<Tuple> tuples = Arrays.asList(t1, t2, t3);
+
+		List<Tuple> expected = Arrays.asList(t3);
+		List<Tuple> actual = method("filterCandidatePeakCrashPairsWithNoLocalTrough")
+			.withReturnType(new TypeRef<List<Tuple>>() {})
+			.withParameterTypes(List.class, List.class, Set[].class)
+			.in(analyzer)
+			.invoke(data, tuples, lpsAndlts);
+
+		assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_FindTrough(List<StockPrice> data) {
+		StockPrice expected = data.get(2);
+		StockPrice actual = method("findTroughInRange")
 			.withReturnType(new TypeRef<StockPrice>() {})
 			.withParameterTypes(int.class, int.class, List.class)
 			.in(analyzer)
-			.invoke(from, to, data);
+			.invoke(2, 5, data);
 
-		assertEquals(expected, trough);
+		assertEquals(expected, actual);
 	}
 
-	private static Stream<Arguments> dataTroughProvider() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 400);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 6), 200);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 7), 200);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp7 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_PopulateTupleWithTrough(List<StockPrice> data) {
+		Tuple t1 = new Tuple(data.get(0), null, data.get(1));
+		Tuple t2 = new Tuple(data.get(2), null, data.get(3));
+		Tuple t3 = new Tuple(data.get(4), null, data.get(4));
 
-		List<StockPrice> data1 = Arrays.asList(sp1, sp2, sp3, sp5, sp7);
-		List<StockPrice> data2 = Arrays.asList(sp1, sp2, sp4, sp6, sp7);
+		Tuple e1 = new Tuple(data.get(0), data.get(1), data.get(1));
+		Tuple e2 = new Tuple(data.get(2), data.get(3), data.get(3));
 
-		return Stream.of(
-				Arguments.of(0, 5, data1, sp5),
-				Arguments.of(0, 5, data2, sp4)
-			);
-	}
+		List<Tuple> tuples = Arrays.asList(t2, t1, t3);
 
-    @ParameterizedTest 
-	@MethodSource("secondProcessProvider")
-	public void Should_GetTheCorrectResultOfSecondProcess(int peakDuration, double peakDifference, List<Tuple> tuples, List<StockPrice> data, List<Tuple> expected) {
-		analyzer.setPeakDuration(peakDuration);
-		analyzer.setPeakDifference(peakDifference);
-
-		List<StockPrice> secondProcessResult = method("secondProcess")
-			.withReturnType(new TypeRef<List<StockPrice>>() {})
-			.withParameterTypes(List.class, List.class)
-			.in(analyzer)
-			.invoke(tuples, data);
-
-		assertEquals(expected, secondProcessResult);
-	}
-
-	private static Stream<Arguments> secondProcessProvider() {
-		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 900);
-		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 700);
-		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 800);
-		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
-		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 1000);
-		StockPrice sp6 = new StockPrice(LocalDate.of(1980, 1, 9), 700);
-		StockPrice sp7 = new StockPrice(LocalDate.of(1980, 1, 10), 1200);
-		StockPrice sp8 = new StockPrice(LocalDate.of(1980, 1, 10), 800);
-
-		Tuple t1 = new Tuple(sp1, null, null);
-		Tuple t2 = new Tuple(sp3, null, null);
-		Tuple t3 = new Tuple(sp5, null, null);
-		Tuple t4 = new Tuple(sp6, null, null);
-		Tuple t5 = new Tuple(sp7, null, null);
-		Tuple t6 = new Tuple(sp8, null, null);
-
-		Tuple t1Copy1 = new Tuple(sp1, sp2, null);
-		Tuple t1Copy2 = new Tuple(sp1, sp4, null);
-		Tuple t2Copy1 = new Tuple(sp3, sp4, null);
-		Tuple t3Copy1 = new Tuple(sp5, sp6, null);
-
-		List<Tuple> tuples1 = Arrays.asList(t1, t2, t3);
-		List<StockPrice> data1 = Arrays.asList(sp1, sp2, sp3, sp4, sp5);
-		List<Tuple> expected1 = Arrays.asList(t1Copy1, t2Copy1);
-
-		List<Tuple> tuples2 = Arrays.asList(t1, t2, t3, t4, t5);
-		List<StockPrice> data2 = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6, sp7);
-		List<Tuple> expected2 = Arrays.asList(t1Copy1, t2Copy1, t3Copy1);
-
-		List<Tuple> tuples3 = Arrays.asList(t1, t2, t3, t4, t6);
-		List<StockPrice> data3 = Arrays.asList(sp1, sp2, sp3, sp4, sp5, sp6, sp8);
-		List<Tuple> expected3 = Arrays.asList(t1Copy2);
-
-		return Stream.of(
-				Arguments.of(1, 0.1, tuples1, data1, expected1),
-				Arguments.of(1, 0.1, tuples2, data2, expected2),
-				Arguments.of(1, 0.2, tuples2, data2, expected3),
-				Arguments.of(5, 0.2, tuples3, data3, expected3)
-			);
-	}
-
-	@Test
-	public void Should_ReturnTheSameTuplesAsSecondProcessResult_When_TheInputTuplesIsEmpty() {
-		List<Tuple> emptyTuples = List.of();
-		List<StockPrice> emptyData = List.of();
-
-		analyzer.setPeakDuration(0);
-		analyzer.setPeakDifference(0);
-
-		List<Tuple> secondProcessResult = method("secondProcess")
+		List<Tuple> expected = Arrays.asList(e1, e2, t3);
+		List<Tuple> actual = method("findTroughs")
 			.withReturnType(new TypeRef<List<Tuple>>() {})
 			.withParameterTypes(List.class, List.class)
 			.in(analyzer)
-			.invoke(emptyTuples, emptyData);
+			.invoke(data, tuples);
 
-		assertEquals(List.of(), secondProcessResult);
+		assertThat(actual).containsExactlyElementsOf(expected);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dataProvider")
+	public void Should_GetCorrectAnalysisResult(List<StockPrice> data) {
+		analyzer.setCrashRate(0.1);
+		analyzer.setData(data);
+
+		List<Tuple> expected = Arrays.asList();
+		List<Tuple> actual = analyzer.getAnalysisResult();
+
+		assertThat(actual).containsExactlyElementsOf(expected);
+	}
+
+	private static Stream<Arguments> dataProvider() {
+		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 4), 600);
+		StockPrice sp2 = new StockPrice(LocalDate.of(1980, 1, 5), 200);
+		StockPrice sp3 = new StockPrice(LocalDate.of(1980, 1, 6), 400);
+		StockPrice sp4 = new StockPrice(LocalDate.of(1980, 1, 7), 400);
+		StockPrice sp5 = new StockPrice(LocalDate.of(1980, 1, 8), 700);
+
+		List<StockPrice> data = Arrays.asList(sp1, sp2, sp3, sp4, sp5);
+
+		return Stream.of(Arguments.of(data));
 	}
 }
