@@ -32,12 +32,6 @@ public class Analyzer {
 	private double crashRate;
 
 	@Setter
-	private int peakDuration;
-
-	@Setter
-	private double peakDifference;
-
-	@Setter
 	@NonNull
 	private List<StockPrice> data;
 

@@ -110,8 +110,6 @@ public class Controller {
 				data = Util.parseData(convertToRealPath.apply(path));
 
 				analyzer.setCrashRate(crashRate);
-				analyzer.setPeakDuration(peakDuration);
-				analyzer.setPeakDifference(peakDifference);
 				analyzer.setData(data);
 
 				Task<List<Tuple>> analyzeTask = new Task<>() {
