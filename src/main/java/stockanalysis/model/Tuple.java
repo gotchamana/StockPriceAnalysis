@@ -47,12 +47,8 @@ public class Tuple extends RecursiveTreeObject<Tuple> implements Cloneable, Seri
 		return trough.getPrice();
 	}
 
-	public double getPeakTroughDecline(int decimalPlace) {
-		double decline = (peak.getPrice() - trough.getPrice()) / peak.getPrice();
-		double shift = Math.pow(10, decimalPlace);
-		decline = Math.round(decline * shift) / shift;
-
-		return decline;
+	public double getPeakTroughDecline() {
+		return (peak.getPrice() - trough.getPrice()) / peak.getPrice();
 	}
 
 	public int getPeakTroughDuration() {

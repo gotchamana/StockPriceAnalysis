@@ -80,7 +80,7 @@ public class Util {
 							tuple.getPeakStockPrice(),
 							tuple.getTroughDate().format(DATE_FORMATTER),
 							tuple.getTroughStockPrice(),
-							tuple.getPeakTroughDecline(3) * 100,
+							tuple.getPeakTroughDecline() * 100,
 							tuple.getPeakTroughDuration()))
 				.forEach(Unchecked.consumer(line -> {
 					out.write(line);

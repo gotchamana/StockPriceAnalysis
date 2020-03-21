@@ -231,7 +231,7 @@ public class StockAnalysisPane extends JFXTabPane {
 		troughStockPriceCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("troughStockPrice"));
 
 		peakTroughDeclineCol.setCellFactory(doubleFormatterCellFactory);
-		peakTroughDeclineCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getPeakTroughDecline(3) * 100));
+		peakTroughDeclineCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getPeakTroughDecline() * 100));
 
 		peakTroughDurationCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakTroughDuration"));
 
