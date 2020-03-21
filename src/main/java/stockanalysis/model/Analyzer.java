@@ -27,6 +27,7 @@ import stockanalysis.util.Util;
 public class Analyzer {
 	
 	private static final int TOTAL_DAYS_OF_YEAR = 252;
+	private static final int LOCAL_RANGE = 90;
 
 	@Setter
 	private double crashRate;
@@ -36,7 +37,7 @@ public class Analyzer {
 	private List<StockPrice> data;
 
 	public List<Tuple> getAnalysisResult() {
-		Set[] lpsAndlts = findLocalPeaksAndLocalTroughs(90, data);
+		Set[] lpsAndlts = findLocalPeaksAndLocalTroughs(LOCAL_RANGE, data);
 		List<Tuple> tuples = findCandidatePeakCrashPairs(TOTAL_DAYS_OF_YEAR, data);
 		tuples = filterSameCandidatePeakTuple(tuples);
 		tuples = filterCandidatePeakCrashPairsWithNoLocalTrough(data, tuples, lpsAndlts);
@@ -161,13 +162,17 @@ public class Analyzer {
 	private List<Tuple> findTroughs(List<StockPrice> data, List<Tuple> tuples) {
 		tuples.sort(Comparator.comparing(t -> t.getPeak().getDate()));
 
-		for (int i = 0; i < tuples.size() - 1; i++) {
+		int i = 0;
+		for (; i < tuples.size() - 1; i++) {
 			int peakIndex1 = data.indexOf(tuples.get(i).getPeak());
 			int peakIndex2 = data.indexOf(tuples.get(i + 1).getPeak());
 			StockPrice trough = findTroughInRange(peakIndex1 + 1, peakIndex2, data);
 
 			tuples.get(i).setTrough(trough);
 		}
+
+		// Last trough will be null, use the default stock price
+		tuples.get(i).setTrough(StockPrice.DEFAULT_STOCK_PRICE);
 
 		return tuples;
 	}
@@ -176,6 +181,6 @@ public class Analyzer {
 		return data.subList(from, to)
 			.stream()
 			.min(Comparator.comparingDouble(StockPrice::getPrice))
-			.get();
+			.orElse(StockPrice.DEFAULT_STOCK_PRICE);
 	}
 }

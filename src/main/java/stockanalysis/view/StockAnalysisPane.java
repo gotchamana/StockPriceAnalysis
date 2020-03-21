@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
@@ -35,6 +36,7 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXProgressBar;
+import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTabPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXTreeTableView;
@@ -42,6 +44,7 @@ import com.jfoenix.validation.DoubleValidator;
 import com.jfoenix.validation.IntegerValidator;
 import com.jfoenix.validation.RequiredFieldValidator;
 
+import stockanalysis.model.StockPriceCrashCycle;
 import stockanalysis.model.Tuple;
 import stockanalysis.util.FileExistValidator;
 import stockanalysis.util.Util;
@@ -49,6 +52,10 @@ import stockanalysis.util.Util;
 public class StockAnalysisPane extends JFXTabPane {
 
 	private FontIcon refreshIcon, tableIcon, chartIcon;
+
+	public JFXRadioButton analysisTableRBtn;
+	public JFXRadioButton crashCycleTableWithPeakRBtn;
+	public JFXRadioButton crashCycleTableWithCrashRBtn;
 
 	public JFXButton selectFileBtn;
 	public JFXButton saveAnalysisBtn;
@@ -64,7 +71,10 @@ public class StockAnalysisPane extends JFXTabPane {
 	public JFXProgressBar progressBar;
 	public JFXProgressBar chartProgressBar;
 
-	public JFXTreeTableView<Tuple> table;
+	public JFXTreeTableView<Tuple> analysisTable;
+	public JFXTreeTableView<StockPriceCrashCycle> crashCycleTableWithPeak;
+	public JFXTreeTableView<StockPriceCrashCycle> crashCycleTableWithCrash;
+
 	public JFXComboBox<Integer> comboBox;
 	public LineChart<String, Number> chart;
 	public Pagination pagination;
@@ -94,6 +104,19 @@ public class StockAnalysisPane extends JFXTabPane {
 
 		chartIcon = FontIcon.of(MaterialDesign.MDI_CHART_LINE);
 		chartIcon.getStyleClass().add("tab-icon");
+
+		// Radio Button
+		ToggleGroup radioBtns = new ToggleGroup();
+
+		analysisTableRBtn = new JFXRadioButton("Analysis Table");
+		analysisTableRBtn.setSelected(true);
+		analysisTableRBtn.setToggleGroup(radioBtns);
+
+		crashCycleTableWithPeakRBtn = new JFXRadioButton("Crash Cycle Table (Peak)");
+		crashCycleTableWithPeakRBtn.setToggleGroup(radioBtns);
+
+		crashCycleTableWithCrashRBtn = new JFXRadioButton("Crash Cycle Table (Identification)");
+		crashCycleTableWithCrashRBtn.setToggleGroup(radioBtns);
 
 		// Button
 		selectFileBtn = new JFXButton("Select file");
@@ -135,9 +158,13 @@ public class StockAnalysisPane extends JFXTabPane {
 		heightInput.getValidators().addAll(requiredFieldValidator, integerValidator);
 		heightInput.getStyleClass().add("chart-dimension-text-field");
 
+		// Table
+		analysisTable = createAnalysisTable();
+		crashCycleTableWithPeak = createCrashCycleTable();
+		crashCycleTableWithCrash = createCrashCycleTable();
+
 		// Other
 		chart = Util.createLineChart();
-		table = createTreeTable();
 
 		comboBox = new JFXComboBox<>();
 		comboBox.setPromptText("Number of data drawn");
@@ -156,7 +183,7 @@ public class StockAnalysisPane extends JFXTabPane {
 	}
 
 	@SuppressWarnings("unchecked")
-	private JFXTreeTableView<Tuple> createTreeTable() {
+	private JFXTreeTableView<Tuple> createAnalysisTable() {
 		Callback<TreeTableColumn<Tuple, LocalDate>, TreeTableCell<Tuple, LocalDate>> dateFormatterCellFactory = col -> new TreeTableCell<>() {
 			@Override
 			protected void updateItem(LocalDate value, boolean empty) {
@@ -168,7 +195,7 @@ public class StockAnalysisPane extends JFXTabPane {
 				}
 			}
 		};
-		Callback<TreeTableColumn<Tuple, Double>,TreeTableCell<Tuple,Double>> doubleFormatterCellFactory = col -> new TreeTableCell<>() {
+		Callback<TreeTableColumn<Tuple, Double>,TreeTableCell<Tuple, Double>> doubleFormatterCellFactory = col -> new TreeTableCell<>() {
 			@Override
 			protected void updateItem(Double value, boolean empty) {
 				super.updateItem(value, empty);
@@ -208,35 +235,88 @@ public class StockAnalysisPane extends JFXTabPane {
 
 		peakTroughDurationCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakTroughDuration"));
 
-		JFXTreeTableView<Tuple> table = new JFXTreeTableView<>(new TreeItem<Tuple>(null));
-		table.setShowRoot(false);
-		table.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
-		table.getColumns().addAll(crashDateCol, peakDateCol,
+		JFXTreeTableView<Tuple> analysisTable = new JFXTreeTableView<>(new TreeItem<Tuple>(null));
+		analysisTable.setShowRoot(false);
+		analysisTable.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
+		analysisTable.getColumns().addAll(crashDateCol, peakDateCol,
 			peakStockPriceCol, troughDateCol, 
 			troughStockPriceCol, peakTroughDeclineCol, 
 			peakTroughDurationCol);
 
-		return table;
+		return analysisTable;
+	}
+
+	@SuppressWarnings("unchecked")
+	private JFXTreeTableView<StockPriceCrashCycle> createCrashCycleTable() {
+		Callback<TreeTableColumn<StockPriceCrashCycle, LocalDate>, TreeTableCell<StockPriceCrashCycle, LocalDate>> dateFormatterCellFactory = col -> new TreeTableCell<>() {
+			@Override
+			protected void updateItem(LocalDate value, boolean empty) {
+				super.updateItem(value, empty);
+				if (empty) {
+					setText(null);
+				} else {
+					setText(value.format(Util.DATE_FORMATTER));
+				}
+			}
+		};
+		Callback<TreeTableColumn<StockPriceCrashCycle, Double>,TreeTableCell<StockPriceCrashCycle, Double>> doubleFormatterCellFactory = col -> new TreeTableCell<>() {
+			@Override
+			protected void updateItem(Double value, boolean empty) {
+				super.updateItem(value, empty);
+				if (empty) {
+					setText(null);
+				} else {
+					setText(String.format("%.2f", value));
+				}
+			}
+		};
+		
+		TreeTableColumn<StockPriceCrashCycle, LocalDate> stockPriceDateCol = new TreeTableColumn<>("Date");
+		TreeTableColumn<StockPriceCrashCycle, Double> stockPriceIndexCol = new TreeTableColumn<>("Index");
+		TreeTableColumn<StockPriceCrashCycle, Boolean> inCrashCycleCol = new TreeTableColumn<>("In Crash Cycle");
+
+		stockPriceDateCol.setCellFactory(dateFormatterCellFactory);
+		stockPriceDateCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getStockPrice().getDate()));
+
+		stockPriceIndexCol.setCellFactory(doubleFormatterCellFactory);
+		stockPriceIndexCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getStockPrice().getPrice()));
+
+		inCrashCycleCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("inCrashCycle"));
+
+		JFXTreeTableView<StockPriceCrashCycle> crashCycleTable = new JFXTreeTableView<>(new TreeItem<StockPriceCrashCycle>(null));
+		crashCycleTable.setShowRoot(false);
+		crashCycleTable.setVisible(false);
+		crashCycleTable.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
+		crashCycleTable.getColumns().addAll(stockPriceDateCol, stockPriceIndexCol, inCrashCycleCol);
+
+		return crashCycleTable;
 	}
 
 	private Tab createTableTab() {
-		GridPane gridPane = createGridPane();
-		gridPane.addRow(0, crashRateInput);
-
 		HBox hBox = new HBox();
-		hBox.setHgrow(filePathInput, Priority.SOMETIMES);
-		hBox.getStyleClass().addAll("hbox", "table-tab-hbox");
-		hBox.getChildren().addAll(filePathInput, selectFileBtn, saveAnalysisBtn, analyzeBtn);
+		hBox.getStyleClass().add("radio-buttons-hbox");
+		hBox.getChildren().addAll(analysisTableRBtn, crashCycleTableWithPeakRBtn, crashCycleTableWithCrashRBtn);
+
+		GridPane gridPane = createGridPane();
+		gridPane.addRow(0, crashRateInput, hBox);
+
+		HBox hBox2 = new HBox();
+		hBox2.setHgrow(filePathInput, Priority.SOMETIMES);
+		hBox2.getStyleClass().addAll("hbox", "table-tab-hbox");
+		hBox2.getChildren().addAll(filePathInput, selectFileBtn, saveAnalysisBtn, analyzeBtn);
 
 		VBox vBox = new VBox();
 		vBox.setMargin(totalLbl, new Insets(5, 5, 0, 0));
 		vBox.getStyleClass().add("vbox");
-		vBox.getChildren().addAll(totalLbl, hBox, progressBar);
+		vBox.getChildren().addAll(totalLbl, hBox2, progressBar);
+
+		StackPane stackPane = new StackPane();
+		stackPane.getChildren().addAll(crashCycleTableWithPeak, crashCycleTableWithCrash, analysisTable);
 
 		BorderPane borderPane = new BorderPane();
 		borderPane.getStyleClass().add("stock-price-border-pane");
 		borderPane.setTop(gridPane);
-		borderPane.setCenter(table);
+		borderPane.setCenter(stackPane);
 		borderPane.setBottom(vBox);
 
 		Tab tab = new Tab(null, borderPane);
@@ -250,8 +330,12 @@ public class StockAnalysisPane extends JFXTabPane {
 			GridPane.USE_COMPUTED_SIZE, Priority.SOMETIMES,
 			HPos.CENTER, true);
 
+		ColumnConstraints col2 = new ColumnConstraints(10, GridPane.USE_COMPUTED_SIZE,
+			GridPane.USE_COMPUTED_SIZE, Priority.NEVER,
+			HPos.CENTER, true);
+
 		GridPane gridPane = new GridPane();
-		gridPane.getColumnConstraints().add(col);
+		gridPane.getColumnConstraints().addAll(col, col2);
 		gridPane.getStyleClass().add("grid-pane");
 
 		return gridPane;

@@ -32,6 +32,7 @@ import com.jfoenix.controls.JFXTextField;
 
 import stockanalysis.model.Analyzer;
 import stockanalysis.model.StockPrice;
+import stockanalysis.model.StockPriceCrashCycle;
 import stockanalysis.model.Tuple;
 import stockanalysis.util.ChartSaver;
 import stockanalysis.util.Util;
@@ -65,9 +66,30 @@ public class Controller {
 			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
 
-			updateTable(newValue);
+			updateAnalysisTable(newValue);
+			updateCrashCycleTable(newValue);
 		});
 
+		// Configure RadioButton
+		root.analysisTableRBtn.setOnAction(e -> {
+			root.analysisTable.setVisible(true);
+			root.crashCycleTableWithPeak.setVisible(false);
+			root.crashCycleTableWithCrash.setVisible(false);
+		});
+
+		root.crashCycleTableWithPeakRBtn.setOnAction(e -> {
+			root.analysisTable.setVisible(false);
+			root.crashCycleTableWithPeak.setVisible(true);
+			root.crashCycleTableWithCrash.setVisible(false);
+		});
+
+		root.crashCycleTableWithCrashRBtn.setOnAction(e -> {
+			root.analysisTable.setVisible(false);
+			root.crashCycleTableWithPeak.setVisible(false);
+			root.crashCycleTableWithCrash.setVisible(true);
+		});
+
+		// Configure Button
 		root.saveAnalysisBtn.setOnAction(e -> {
 			FileChooser fileChooser = createFileChooser("Save Analysis Result", "analysis.txt");
 			Optional.ofNullable(fileChooser.showSaveDialog(stage))
@@ -113,6 +135,7 @@ public class Controller {
 						return analyzer.getAnalysisResult();
 					}
 				};
+				analyzeTask.exceptionProperty().addListener((obs, oldValue, newValue) -> newValue.printStackTrace());
 				analyzeTask.setOnRunning(event -> root.progressBar.setProgress(-1));
 				analyzeTask.setOnSucceeded(event -> {
 					root.progressBar.setProgress(0);
@@ -213,12 +236,21 @@ public class Controller {
 		}
 	}
 
-	private void updateTable(List<Tuple> newTuples) {
-		TreeItem<Tuple> rootItem = root.table.getRoot();
+	private void updateAnalysisTable(List<Tuple> newTuples) {
+		TreeItem<Tuple> rootItem = root.analysisTable.getRoot();
 		rootItem.getChildren().clear();
 
 		newTuples.stream()
 			.map(TreeItem::new)
+			.forEach(rootItem.getChildren()::add);
+	}
+
+	private void updateCrashCycleTable(List<Tuple> newTuples) {
+		TreeItem<StockPriceCrashCycle> rootItem = root.crashCycleTableWithPeak.getRoot();
+		rootItem.getChildren().clear();
+
+		data.stream()
+			.map(d -> new TreeItem<StockPriceCrashCycle>(new StockPriceCrashCycle(d, true)))
 			.forEach(rootItem.getChildren()::add);
 	}
 

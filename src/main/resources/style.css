@@ -20,6 +20,11 @@
 	-fx-spacing: 10;
 }
 
+.radio-buttons-hbox {
+	-fx-spacing: 20;
+	-fx-alignment: center;
+}
+
 .table-tab-hbox {
 	-fx-alignment: center-right;
 	-fx-padding: 5 5 30 5;

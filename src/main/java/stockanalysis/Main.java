@@ -18,7 +18,7 @@ public class Main extends Application {
         controller.init();
 
         Scene scene = new Scene(root);
-        scene.getStylesheets().add("/style.css");
+        scene.getStylesheets().addAll("/style.css");
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("StockAnalysis");
