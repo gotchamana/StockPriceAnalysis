@@ -97,7 +97,7 @@ public class Controller {
 
 		// Configure Button
 		root.saveAnalysisBtn.setOnAction(e -> {
-			FileChooser fileChooser = createFileChooser("Save Analysis Result", "analysis.txt");
+			FileChooser fileChooser = createFileChooser("Save Analysis Result", "analysis.csv", Util.CSV_FILE_EXTENSION_FILTER);
 			Optional.ofNullable(fileChooser.showSaveDialog(stage))
 				.ifPresent(file -> {
 					Task<Void> saveTask = new Task<>() {
@@ -117,7 +117,7 @@ public class Controller {
 		});
 
 		root.selectFileBtn.setOnAction(e -> {
-			FileChooser fileChooser = createFileChooser("Select CSV File", "", new FileChooser.ExtensionFilter("CSV File", "*.csv", "*.CSV"));
+			FileChooser fileChooser = createFileChooser("Select CSV File", "", Util.CSV_FILE_EXTENSION_FILTER);
 			Optional.ofNullable(fileChooser.showOpenDialog(stage))
 				.ifPresent(file -> root.filePathInput.setText(file.getPath()));
 		});
@@ -164,7 +164,7 @@ public class Controller {
 				int width = Integer.parseInt(widthInput.getText());
 				int height = Integer.parseInt(heightInput.getText());
 
-				FileChooser fileChooser = createFileChooser("Save Chart As Image", "chart.png");
+				FileChooser fileChooser = createFileChooser("Save Chart As Image", "chart.png", Util.PNG_FILE_EXTENSION_FILTER);
 				Optional.ofNullable(fileChooser.showSaveDialog(stage))
 					.ifPresent(file -> {
 						SaveChartTask saveChartTask = new SaveChartTask(width, height, file, tupleProperty.get(), data);

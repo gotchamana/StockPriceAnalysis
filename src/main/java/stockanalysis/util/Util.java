@@ -30,6 +30,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Tooltip;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
 
 import org.jooq.lambda.Unchecked;
 
@@ -40,6 +41,9 @@ public class Util {
 
 	public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("YYYY/MM/dd");
 	public static final Path TEMP_FILE = Paths.get(System.getProperty("java.io.tmpdir")).resolve("StockAnalysis.tmp");
+
+	public static final FileChooser.ExtensionFilter PNG_FILE_EXTENSION_FILTER = new FileChooser.ExtensionFilter("PNG File", "*.png", "*.PNG");
+	public static final FileChooser.ExtensionFilter CSV_FILE_EXTENSION_FILTER = new FileChooser.ExtensionFilter("CSV File", "*.csv", "*.CSV");
 
 	private Util() {
 	}
