@@ -68,6 +68,11 @@ public class Util {
 		return (int) (duration.getSeconds() / 60 / 60 / 24);
 	}
 
+	public static boolean checkDateIsBetween(LocalDate from, LocalDate to, LocalDate target) {
+		// Inclusive
+		return (target.equals(from) || target.equals(to)) || (target.isAfter(from) && target.isBefore(to));
+	}
+
 	public static void saveAnalysisResult(List<Tuple> tuples, Path path) {
 		try(BufferedWriter out = Files.newBufferedWriter(path)) {
 			out.write("Crash Identification Date, Peak Date, Index at Peak, Trough Date, Index at Trough, Peak-to-Trough decline(%), Peak-to-Trough duration(in days)");

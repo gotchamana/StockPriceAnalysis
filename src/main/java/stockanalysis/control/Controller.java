@@ -29,6 +29,7 @@ import org.jooq.lambda.Unchecked;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.JFXTreeTableView;
 
 import stockanalysis.model.Analyzer;
 import stockanalysis.model.StockPrice;
@@ -66,24 +67,29 @@ public class Controller {
 			// Update total number label
 			root.totalLbl.setText("Total: " + newValue.size());
 
+			// Update all tables
 			updateAnalysisTable(newValue);
-			updateCrashCycleTable(newValue);
+			updateCrashCycleTable(newValue, root.crashCycleTableWithPeak);
+			updateCrashCycleTable(newValue, root.crashCycleTableWithCrash);
 		});
 
 		// Configure RadioButton
 		root.analysisTableRBtn.setOnAction(e -> {
+			root.totalLbl.setVisible(true);
 			root.analysisTable.setVisible(true);
 			root.crashCycleTableWithPeak.setVisible(false);
 			root.crashCycleTableWithCrash.setVisible(false);
 		});
 
 		root.crashCycleTableWithPeakRBtn.setOnAction(e -> {
+			root.totalLbl.setVisible(false);
 			root.analysisTable.setVisible(false);
 			root.crashCycleTableWithPeak.setVisible(true);
 			root.crashCycleTableWithCrash.setVisible(false);
 		});
 
 		root.crashCycleTableWithCrashRBtn.setOnAction(e -> {
+			root.totalLbl.setVisible(false);
 			root.analysisTable.setVisible(false);
 			root.crashCycleTableWithPeak.setVisible(false);
 			root.crashCycleTableWithCrash.setVisible(true);
@@ -245,12 +251,34 @@ public class Controller {
 			.forEach(rootItem.getChildren()::add);
 	}
 
-	private void updateCrashCycleTable(List<Tuple> newTuples) {
-		TreeItem<StockPriceCrashCycle> rootItem = root.crashCycleTableWithPeak.getRoot();
+	private void updateCrashCycleTable(List<Tuple> newTuples, JFXTreeTableView<StockPriceCrashCycle> crashCycleTable) {
+		TreeItem<StockPriceCrashCycle> rootItem = crashCycleTable.getRoot();
 		rootItem.getChildren().clear();
 
 		data.stream()
-			.map(d -> new TreeItem<StockPriceCrashCycle>(new StockPriceCrashCycle(d, true)))
+			.map(sp -> {
+				boolean inCrashCycle = false;
+				for (Tuple tuple : newTuples) {
+					LocalDate from = (crashCycleTable == root.crashCycleTableWithPeak) ? tuple.getPeakDate() : tuple.getCrashDate();
+					LocalDate to = tuple.getTroughDate();
+					LocalDate target = sp.getDate();
+
+					// Crash identification date may be later than trough date
+					if (from.isAfter(to)) {
+						LocalDate tmp = from;
+						from = to;
+						to = tmp;
+					}
+
+					if (Util.checkDateIsBetween(from, to, target)) {
+						inCrashCycle = true;
+						break;
+					}
+				}
+
+				return new StockPriceCrashCycle(sp, inCrashCycle);
+			})
+			.map(TreeItem::new)
 			.forEach(rootItem.getChildren()::add);
 	}
 
