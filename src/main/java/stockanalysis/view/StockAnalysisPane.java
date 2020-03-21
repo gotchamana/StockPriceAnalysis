@@ -190,6 +190,8 @@ public class StockAnalysisPane extends JFXTabPane {
 				super.updateItem(value, empty);
 				if (empty) {
 					setText(null);
+				} else if (value.equals(LocalDate.MIN)) {
+					setText("N/A");
 				} else {
 					setText(value.format(Util.DATE_FORMATTER));
 				}
@@ -201,8 +203,23 @@ public class StockAnalysisPane extends JFXTabPane {
 				super.updateItem(value, empty);
 				if (empty) {
 					setText(null);
+				} else if (Double.isInfinite(value)) {
+					setText("N/A");
 				} else {
 					setText(String.format("%.2f", value));
+				}
+			}
+		};
+		Callback<TreeTableColumn<Tuple, Integer>, TreeTableCell<Tuple, Integer>> durationFormatterCellFactory = col -> new TreeTableCell<>() {
+			@Override
+			protected void updateItem(Integer value, boolean empty) {
+				super.updateItem(value, empty);
+				if (empty) {
+					setText(null);
+				} else if (value < 0) {
+					setText("N/A");
+				} else {
+					setText(String.valueOf(value));
 				}
 			}
 		};
@@ -233,6 +250,7 @@ public class StockAnalysisPane extends JFXTabPane {
 		peakTroughDeclineCol.setCellFactory(doubleFormatterCellFactory);
 		peakTroughDeclineCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getPeakTroughDecline() * 100));
 
+		peakTroughDurationCol.setCellFactory(durationFormatterCellFactory);
 		peakTroughDurationCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("peakTroughDuration"));
 
 		JFXTreeTableView<Tuple> analysisTable = new JFXTreeTableView<>(new TreeItem<Tuple>(null));

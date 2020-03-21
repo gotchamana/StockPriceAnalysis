@@ -32,7 +32,7 @@ public class StockPrice implements Comparable<StockPrice>, Serializable {
 		}
 	}
 
-	public static final StockPrice DEFAULT_STOCK_PRICE = new StockPrice(LocalDate.MAX, Double.POSITIVE_INFINITY);
+	public static final StockPrice DEFAULT_STOCK_PRICE = new StockPrice(LocalDate.MIN, Double.NEGATIVE_INFINITY);
 
 	private static final long serialVersionUID = 43204820L;
 
