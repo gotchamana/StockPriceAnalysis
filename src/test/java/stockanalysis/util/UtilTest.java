@@ -91,6 +91,55 @@ public class UtilTest {
 			);
 	}
 
+	@ParameterizedTest
+	@MethodSource("dateProvider")
+	public void Should_BeInTheRange_When_TheTargetDateIsFromDate(LocalDate from, LocalDate to) {
+		LocalDate target = LocalDate.of(1980, 1, 1);
+		boolean actual = Util.checkDateIsBetween(from, to, target);
+
+		assertTrue(actual);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dateProvider")
+	public void Should_BeInTheRange_When_TheTargetDateIsToDate(LocalDate from, LocalDate to) {
+		LocalDate target = LocalDate.of(1981, 7, 7);
+		boolean actual = Util.checkDateIsBetween(from, to, target);
+
+		assertTrue(actual);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dateProvider")
+	public void Should_BeInTheRange_When_TheTargetDateIsBetweenTheFromAndToDate(LocalDate from, LocalDate to) {
+		LocalDate target = LocalDate.of(1981, 5, 5);
+		boolean actual = Util.checkDateIsBetween(from, to, target);
+
+		assertTrue(actual);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dateProvider")
+	public void Should_NotBeInTheRange_When_TheTargetDateIsBeforeTheFromDate(LocalDate from, LocalDate to) {
+		LocalDate target = LocalDate.of(1979, 5, 5);
+		boolean actual = Util.checkDateIsBetween(from, to, target);
+
+		assertFalse(actual);
+	}
+
+	@ParameterizedTest
+	@MethodSource("dateProvider")
+	public void Should_NotBeInTheRange_When_TheTargetDateIsAfterTheToDate(LocalDate from, LocalDate to) {
+		LocalDate target = LocalDate.of(1982, 5, 5);
+		boolean actual = Util.checkDateIsBetween(from, to, target);
+
+		assertFalse(actual);
+	}
+
+	private static Stream<Arguments> dateProvider() {
+		return Stream.of(Arguments.of(LocalDate.of(1980, 1, 1), LocalDate.of(1981, 7, 7)));
+	}
+
 	@Test
 	public void Should_SaveAnalysisResultToSpecifiedFile() {
 		StockPrice sp1 = new StockPrice(LocalDate.of(1980, 1, 1), 500);
