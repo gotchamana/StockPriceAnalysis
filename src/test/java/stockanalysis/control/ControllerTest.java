@@ -56,33 +56,18 @@ public class ControllerTest {
 		robot.clickOn(root.analyzeBtn, DEFAULT)
 			.sleep(500);
 
-		assertThat(robot.from(root.peakDurationInput).lookup(".error-label").queryAs(Label.class)).hasText("Input required");
-		assertThat(robot.from(root.peakDifferenceInput).lookup(".error-label").queryAs(Label.class)).hasText("Input required");
 		assertThat(robot.from(root.crashRateInput).lookup(".error-label").queryAs(Label.class)).hasText("Input required");
 		assertThat(robot.from(root.filePathInput).lookup(".error-label").queryAs(Label.class)).hasText("Input required");
 	}
 
 	// @Disabled
 	@Test
-	public void Should_GiveIntegerNumberError_When_InputNonNumberToPeakDurationTextField(FxRobot robot) {
-		robot.clickOn(root.peakDurationInput, DEFAULT)
-			.write("abc")
-			.clickOn(root.analyzeBtn, DEFAULT)
-			.sleep(500);
-		assertThat(robot.from(root.peakDurationInput).lookup(".error-label").queryAs(Label.class)).hasText("Value must be a number");
-	}
-
-	// @Disabled
-	@Test
 	public void Should_GiveDoubleNumberError_When_InputNonNumberToPeakDifferenceAndCrashRateTextField(FxRobot robot) {
-		robot.clickOn(root.peakDifferenceInput, DEFAULT)
-			.write("abc")
-			.clickOn(root.crashRateInput, DEFAULT)
+		robot.clickOn(root.crashRateInput, DEFAULT)
 			.write("abc")
 			.clickOn(root.analyzeBtn, DEFAULT)
 			.sleep(500);
 
-		assertThat(robot.from(root.peakDifferenceInput).lookup(".error-label").queryAs(Label.class)).hasText("Value must be a rational number");
 		assertThat(robot.from(root.crashRateInput).lookup(".error-label").queryAs(Label.class)).hasText("Value must be a rational number");
 	}
 
@@ -136,8 +121,6 @@ public class ControllerTest {
 	// @Disabled
 	@Test
 	public void Should_EnableOrDisableSaveButton_When_ThereAreAnalysisResultOrNoAnalysisResult(FxRobot robot) {
-		root.peakDurationInput.setText("10");
-		root.peakDifferenceInput.setText("10");
 		root.crashRateInput.setText("10");
 		root.filePathInput.setText("/home/shootingstar/NetBeansProjects/StockAnalysis/src/test/resources/stockPrice.csv");
 
@@ -155,8 +138,6 @@ public class ControllerTest {
 	// @Disabled
 	@Test
 	public void Should_ChangeTheTotalNumberLabelText_When_AnalyzeData(FxRobot robot) {
-		root.peakDurationInput.setText("10");
-		root.peakDifferenceInput.setText("10");
 		root.crashRateInput.setText("10");
 		root.filePathInput.setText("/home/shootingstar/NetBeansProjects/StockAnalysis/src/test/resources/stockPrice.csv");
 

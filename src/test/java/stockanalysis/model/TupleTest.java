@@ -14,39 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TupleTest {
 
     @ParameterizedTest 
-	@MethodSource("tupleDeclineProvider")
-	public void Should_GetCorrectDeclineWithRoundingOffToTheThirdDecimalPlace_When_CalculateDeclineBetweenPeakAndTrough(Tuple tuple, double expected) {
-		assertEquals(expected, tuple.getPeakTroughDecline(3));
-	}
-
-	private static Stream<Arguments> tupleDeclineProvider() {
-		StockPrice crash = new StockPrice(LocalDate.now(), 0);
-
-		StockPrice peak1 = new StockPrice(LocalDate.now(), 104.77);
-		StockPrice trough1 = new StockPrice(LocalDate.now(), 90.16);
-		Tuple tuple1 = new Tuple(peak1, trough1, crash);
-
-		StockPrice peak2 = new StockPrice(LocalDate.now(), 336.77);
-		StockPrice trough2 = new StockPrice(LocalDate.now(), 223.92);
-		Tuple tuple2 = new Tuple(peak2, trough2, crash);
-
-		StockPrice peak3 = new StockPrice(LocalDate.now(), 1527.46);
-		StockPrice trough3 = new StockPrice(LocalDate.now(), 1103.25);
-		Tuple tuple3 = new Tuple(peak3, trough3, crash);
-
-		StockPrice peak4 = new StockPrice(LocalDate.now(), 2130.82);
-		StockPrice trough4 = new StockPrice(LocalDate.now(), 1867.61);
-		Tuple tuple4 = new Tuple(peak4, trough4, crash);
-
-		return Stream.of(
-				Arguments.of(tuple1, 0.139),
-				Arguments.of(tuple2, 0.335),
-				Arguments.of(tuple3, 0.278),
-				Arguments.of(tuple4, 0.124)
-			);
-	}
-
-    @ParameterizedTest 
 	@MethodSource("tupleDurationProvider")
 	public void Should_GetCorrectDurationInDays_When_CalculateDurationBetweenPeakAndTrough(Tuple tuple, int expected) {
 		assertEquals(expected, tuple.getPeakTroughDuration());

@@ -54,3 +54,5 @@ test {
         }
     }
 }
+
+defaultTasks << 'run'

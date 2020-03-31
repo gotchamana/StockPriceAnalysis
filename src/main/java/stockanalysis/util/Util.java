@@ -84,13 +84,13 @@ public class Util {
 
 			tuples.stream()
 				.map(tuple -> String.format("%s, %s, %.2f, %s, %.2f, %.1f, %d",
-							tuple.getCrashDate().format(DATE_FORMATTER),
-							tuple.getPeakDate().format(DATE_FORMATTER),
-							tuple.getPeakStockPrice(),
-							tuple.getTroughDate().format(DATE_FORMATTER),
-							tuple.getTroughStockPrice(),
-							tuple.getPeakTroughDecline() * 100,
-							tuple.getPeakTroughDuration()))
+					tuple.getCrashDate().format(DATE_FORMATTER),
+					tuple.getPeakDate().format(DATE_FORMATTER),
+					tuple.getPeakStockPrice(),
+					tuple.getTroughDate().format(DATE_FORMATTER),
+					tuple.getTroughStockPrice(),
+					tuple.getPeakTroughDecline() * 100,
+					tuple.getPeakTroughDuration()))
 				.forEach(Unchecked.consumer(line -> {
 					out.write(line);
 					out.newLine();
