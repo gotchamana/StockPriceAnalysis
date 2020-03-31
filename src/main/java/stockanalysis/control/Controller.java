@@ -263,6 +263,9 @@ public class Controller {
 					LocalDate to = tuple.getTroughDate();
 					LocalDate target = sp.getDate();
 
+					// Some tuples don't have trough
+					if (to.equals(LocalDate.MIN)) continue;
+
 					// Crash identification date may be later than trough date
 					if (from.isAfter(to)) {
 						LocalDate tmp = from;
