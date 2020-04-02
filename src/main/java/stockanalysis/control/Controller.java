@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
@@ -30,6 +31,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXTreeTableView;
+import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 
 import stockanalysis.model.Analyzer;
 import stockanalysis.model.StockPrice;
@@ -103,7 +105,29 @@ public class Controller {
 					Task<Void> saveTask = new Task<>() {
 						@Override
 						protected Void call() throws Exception {
-							Util.saveAnalysisResult(tupleProperty.get(), file.toPath());
+							String csvHeader = "";
+
+							// According to the selected table to save csv file
+							if (root.analysisTableRBtn.isSelected()) {
+								List<Tuple> tuples = getDataFromTreeTable(root.analysisTable);
+								csvHeader = "Crash Identification Date, " +
+								   "Peak Date, " +
+								   "Index at Peak, " +
+								   "Trough Date, " +
+								   "Index at Trough, " +
+								   "Peak-to-Trough decline(%), " +
+								   "Peak-to-Trough duration(in days)";
+
+								Util.saveAnalysisResult(tuples, csvHeader, Util::convertTuple, file.toPath());
+							} else {
+								List<StockPriceCrashCycle> spccs = root.crashCycleTableWithPeakRBtn.isSelected() ?
+									getDataFromTreeTable(root.crashCycleTableWithPeak) :
+									getDataFromTreeTable(root.crashCycleTableWithCrash);
+								csvHeader = "Date, Index, In Crash Cycle";
+
+								Util.saveAnalysisResult(spccs, csvHeader, Util::convertStockPriceCrashCycle, file.toPath());
+							}
+
 							return null;
 						}
 					};
@@ -188,6 +212,14 @@ public class Controller {
 		fileChooser.getExtensionFilters().addAll(filters);
 
 		return fileChooser;
+	}
+
+	private <T extends RecursiveTreeObject<T>> List<T> getDataFromTreeTable(JFXTreeTableView<T> treeTable) {
+		return treeTable.getRoot()
+			.getChildren()
+			.stream()
+			.map(TreeItem::getValue)
+			.collect(Collectors.toList());
 	}
 
 	private void setRefreshBtnBehavior() {

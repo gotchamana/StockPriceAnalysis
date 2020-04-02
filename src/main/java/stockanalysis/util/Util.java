@@ -20,6 +20,7 @@ import java.util.Formatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +37,7 @@ import javafx.stage.FileChooser;
 import org.jooq.lambda.Unchecked;
 
 import stockanalysis.model.StockPrice;
+import stockanalysis.model.StockPriceCrashCycle;
 import stockanalysis.model.Tuple;
 
 public class Util {
@@ -78,13 +80,13 @@ public class Util {
 		return (target.equals(from) || target.equals(to)) || (target.isAfter(from) && target.isBefore(to));
 	}
 
-	public static void saveAnalysisResult(List<Tuple> tuples, Path path) {
+	public static <T> void saveAnalysisResult(List<T> analysisResult, String csvHeader, Function<T, String> converter, Path path) {
 		try(BufferedWriter out = Files.newBufferedWriter(path)) {
-			out.write("Crash Identification Date, Peak Date, Index at Peak, Trough Date, Index at Trough, Peak-to-Trough decline(%), Peak-to-Trough duration(in days)");
+			out.write(csvHeader);
 			out.newLine();
 
-			tuples.stream()
-				.map(Util::convertTuple)
+			analysisResult.stream()
+				.map(converter)
 				.forEach(Unchecked.consumer(line -> {
 					out.write(line);
 					out.newLine();
@@ -95,7 +97,7 @@ public class Util {
 		}
 	}
 
-	private static String convertTuple(Tuple tuple) {
+	public static String convertTuple(Tuple tuple) {
 		Formatter formatter = new Formatter(new StringBuilder());
 		LocalDate troughDate = tuple.getTroughDate();
 
@@ -116,6 +118,15 @@ public class Util {
 		}
 
 		return formatter.toString();
+	}
+
+	public static String convertStockPriceCrashCycle(StockPriceCrashCycle spcc) {
+		StockPrice sp = spcc.getStockPrice();
+
+		return String.format("%s, %.2f, %d",
+			sp.getDate().format(DATE_FORMATTER),
+			sp.getPrice(),
+			spcc.getInCrashCycle());
 	}
 
 	public static LineChart<String, Number> createLineChart() {
