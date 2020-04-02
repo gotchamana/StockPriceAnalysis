@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Formatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -83,14 +84,7 @@ public class Util {
 			out.newLine();
 
 			tuples.stream()
-				.map(tuple -> String.format("%s, %s, %.2f, %s, %.2f, %.1f, %d",
-					tuple.getCrashDate().format(DATE_FORMATTER),
-					tuple.getPeakDate().format(DATE_FORMATTER),
-					tuple.getPeakStockPrice(),
-					tuple.getTroughDate().format(DATE_FORMATTER),
-					tuple.getTroughStockPrice(),
-					tuple.getPeakTroughDecline() * 100,
-					tuple.getPeakTroughDuration()))
+				.map(Util::convertTuple)
 				.forEach(Unchecked.consumer(line -> {
 					out.write(line);
 					out.newLine();
@@ -99,6 +93,29 @@ public class Util {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static String convertTuple(Tuple tuple) {
+		Formatter formatter = new Formatter(new StringBuilder());
+		LocalDate troughDate = tuple.getTroughDate();
+
+		formatter.format("%s, %s, %.2f, ",
+			tuple.getCrashDate().format(DATE_FORMATTER),
+			tuple.getPeakDate().format(DATE_FORMATTER),
+			tuple.getPeakStockPrice());
+
+		// Some tuples don't have trough
+		if (troughDate.equals(LocalDate.MIN)) {
+			formatter.format("%1$s, %1$s, %1$s, %1$s", "N/A");
+		} else {
+			formatter.format("%s, %.2f, %.1f, %d",
+				troughDate.format(DATE_FORMATTER),
+				tuple.getTroughStockPrice(),
+				tuple.getPeakTroughDecline() * 100,
+				tuple.getPeakTroughDuration());
+		}
+
+		return formatter.toString();
 	}
 
 	public static LineChart<String, Number> createLineChart() {
