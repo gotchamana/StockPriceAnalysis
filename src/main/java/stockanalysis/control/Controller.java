@@ -257,7 +257,7 @@ public class Controller {
 
 		data.stream()
 			.map(sp -> {
-				boolean inCrashCycle = false;
+				int inCrashCycle = 0;
 				for (Tuple tuple : newTuples) {
 					LocalDate from = (crashCycleTable == root.crashCycleTableWithPeak) ? tuple.getPeakDate() : tuple.getCrashDate();
 					LocalDate to = tuple.getTroughDate();
@@ -274,7 +274,7 @@ public class Controller {
 					}
 
 					if (Util.checkDateIsBetween(from, to, target)) {
-						inCrashCycle = true;
+						inCrashCycle = 1;
 						break;
 					}
 				}

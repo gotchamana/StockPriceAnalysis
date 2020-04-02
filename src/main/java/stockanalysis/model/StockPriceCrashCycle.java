@@ -12,5 +12,5 @@ import lombok.EqualsAndHashCode;
 public class StockPriceCrashCycle extends RecursiveTreeObject<StockPriceCrashCycle> {
     
     private StockPrice stockPrice;
-    private boolean inCrashCycle;
+    private int inCrashCycle;
 }

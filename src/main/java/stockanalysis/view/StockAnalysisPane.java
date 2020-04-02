@@ -291,7 +291,7 @@ public class StockAnalysisPane extends JFXTabPane {
 		
 		TreeTableColumn<StockPriceCrashCycle, LocalDate> stockPriceDateCol = new TreeTableColumn<>("Date");
 		TreeTableColumn<StockPriceCrashCycle, Double> stockPriceIndexCol = new TreeTableColumn<>("Index");
-		TreeTableColumn<StockPriceCrashCycle, Boolean> inCrashCycleCol = new TreeTableColumn<>("In Crash Cycle");
+		TreeTableColumn<StockPriceCrashCycle, Integer> inCrashCycleCol = new TreeTableColumn<>("In Crash Cycle");
 
 		stockPriceDateCol.setCellFactory(dateFormatterCellFactory);
 		stockPriceDateCol.setCellValueFactory(feature -> new ReadOnlyObjectWrapper<>(feature.getValue().getValue().getStockPrice().getDate()));
