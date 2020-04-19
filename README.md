@@ -1,0 +1,2 @@
+# StockPriceAnalysis
+實作論文裡對股價趨勢分析的研究方法
